@@ -1,0 +1,954 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>演化之旅：從小細胞到大部落</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#06202c;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;color:#fff;user-select:none}
+canvas{display:block;position:fixed;inset:0;touch-action:none}
+#c2d{z-index:1}#c3d{z-index:0}
+.hide{display:none!important}
+button{font-family:inherit;cursor:pointer}
+#hud{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:10px;align-items:center;pointer-events:none}
+#stagebar{display:flex;gap:4px;background:#0009;padding:6px 10px;border-radius:30px;backdrop-filter:blur(4px)}
+.sn{display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:13px;color:#9ab;position:relative;overflow:hidden;min-width:86px}
+.sn .fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#3fd18b,#9df07a);opacity:.35;width:0;transition:width .5s}
+.sn.cur{color:#fff;box-shadow:0 0 0 2px #ffd85a inset}
+.sn.done{color:#bfffd6}
+.sn span{position:relative}
+#dnabox{background:#0009;padding:6px 14px;border-radius:30px;font-weight:bold;font-size:16px;color:#7ff7ff}
+#dnabox.pop{animation:pop .3s}
+@keyframes pop{50%{transform:scale(1.25)}}
+#muteBtn{position:fixed;top:10px;right:10px;z-index:30;background:#0008;border:0;color:#fff;font-size:18px;border-radius:50%;width:40px;height:40px}
+#menuBtn{position:fixed;top:10px;left:10px;z-index:30;background:#0008;border:0;color:#fff;font-size:15px;border-radius:20px;padding:9px 14px}
+#bars{position:fixed;left:12px;top:60px;z-index:20;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.bar{width:190px;height:18px;background:#0008;border-radius:10px;overflow:hidden;position:relative;font-size:11px}
+.bar i{display:block;height:100%;transition:width .2s}
+.bar b{position:absolute;left:8px;top:1px;font-weight:normal;text-shadow:0 1px 2px #000}
+#statbox{background:#0008;border-radius:10px;padding:6px 10px;font-size:13px;line-height:1.6}
+#prompt{position:fixed;bottom:118px;left:50%;transform:translateX(-50%);z-index:20;background:#000a;padding:8px 16px;border-radius:14px;font-size:15px;pointer-events:none;white-space:nowrap}
+#prompt:empty{display:none}
+#toast{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:40;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+.tm{background:linear-gradient(90deg,#1b6b8f,#2f9a6a);padding:8px 18px;border-radius:14px;font-size:15px;box-shadow:0 4px 14px #0006;animation:tin .3s}
+@keyframes tin{from{transform:translateY(-12px);opacity:0}}
+#actions{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:96vw}
+.ab{background:#ffffffe8;color:#234;border:0;border-radius:14px;padding:9px 13px;font-size:14px;font-weight:bold;box-shadow:0 3px 0 #0004}
+.ab:disabled{opacity:.4}
+.ab.big{background:linear-gradient(#ffe066,#ffb733);font-size:17px;padding:12px 20px;animation:glow 1.2s infinite alternate}
+@keyframes glow{to{box-shadow:0 0 22px #ffd34d}}
+.ab.on{background:#9df07a}
+.overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#1f6f86ee,#062633f5)}
+.card{background:#ffffff14;border:1px solid #ffffff30;border-radius:22px;padding:26px 30px;max-width:760px;width:92vw;max-height:90vh;overflow:auto;backdrop-filter:blur(6px)}
+#menu h1{font-size:54px;margin:0 0 4px;letter-spacing:4px;background:linear-gradient(90deg,#8fffe1,#ffe27a,#ff9ed1);-webkit-background-clip:text;color:transparent;text-align:center}
+#menu .sub{text-align:center;color:#cfeff7;margin-bottom:20px;font-size:17px}
+.mb{display:block;width:280px;margin:10px auto;padding:14px;font-size:20px;border:0;border-radius:16px;background:linear-gradient(#7ef0c4,#38c79a);color:#05372a;font-weight:bold;box-shadow:0 4px 0 #1b7a5c}
+.mb.alt{background:linear-gradient(#ffffff,#d8eef5);color:#174;box-shadow:0 4px 0 #8ab}
+.stages{display:flex;justify-content:center;gap:14px;margin:18px 0 6px;font-size:13px;color:#bde}
+.stages div{text-align:center}.stages em{display:block;font-style:normal;font-size:34px}
+#help h2{margin:0 0 10px;color:#ffe27a}#help h3{margin:14px 0 4px;color:#8fffe1}#help p,#help li{color:#e6f6fb;line-height:1.6;margin:2px 0}
+kbd{background:#fff;color:#234;border-radius:5px;padding:0 6px;font-family:inherit;font-weight:bold;box-shadow:0 2px 0 #889}
+#fade{position:fixed;inset:0;z-index:60;background:#041a24;opacity:0;pointer-events:none;transition:opacity .6s;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#fade.on{opacity:1;pointer-events:auto}
+#fadeTitle{font-size:44px;font-weight:bold;color:#ffe27a;letter-spacing:3px}
+#fadeSub{font-size:18px;color:#bfe;margin-top:12px}
+#diet .opts{display:flex;gap:18px;justify-content:center;margin-top:14px}
+.dopt{width:220px;padding:20px;border-radius:18px;border:3px solid transparent;background:#ffffff1c;color:#fff;font-size:16px}
+.dopt:hover{border-color:#ffe27a}.dopt em{display:block;font-style:normal;font-size:56px}
+#cellpanel{position:fixed;right:12px;top:60px;z-index:25;width:250px;background:#0b3646ee;border-radius:16px;padding:12px;border:1px solid #fff3}
+#cellpanel h3{margin:0 0 8px;font-size:16px;color:#8fffe1}
+.cp{display:flex;align-items:center;gap:8px;background:#ffffff14;border-radius:10px;padding:7px;margin:5px 0;font-size:13px}
+.cp em{font-style:normal;font-size:22px}.cp div{flex:1}.cp small{color:#acd;display:block}
+.cp button{border:0;border-radius:8px;padding:5px 8px;font-weight:bold;background:#7ef0c4;color:#053}
+.cp button:disabled{background:#556;color:#99a}
+/* editor */
+#editor{position:fixed;inset:0;z-index:15;pointer-events:none}
+#editor>*{pointer-events:auto}
+#pal{position:absolute;left:10px;top:58px;bottom:10px;width:250px;background:#0d2f3ee8;border-radius:16px;padding:10px;overflow:auto;border:1px solid #fff2}
+#pal h3{margin:4px 0 8px;font-size:15px;color:#8fffe1}
+.pb{display:flex;align-items:center;gap:8px;width:100%;background:#ffffff12;border:2px solid transparent;color:#fff;border-radius:10px;padding:6px 8px;margin:4px 0;text-align:left;font-size:13px}
+.pb em{font-style:normal;font-size:22px;width:28px;text-align:center}.pb small{display:block;color:#9cd;font-size:11px}
+.pb.sel{border-color:#ffe27a;background:#ffe27a22}.pb.lock{opacity:.75}
+.tools{display:flex;gap:6px;margin:6px 0}.tools button{flex:1;white-space:nowrap;border:0;border-radius:9px;padding:7px 4px;background:#ffffff22;color:#fff;font-size:13px}
+.tools button.sel{background:#ffe27a;color:#432}
+#edwrap{position:absolute;left:270px;right:270px;bottom:10px;background:#0d2f3ee8;border-radius:16px;padding:8px;border:1px solid #fff2;display:flex;flex-direction:column;align-items:center}
+#edc{position:static;display:block;width:100%;max-width:620px;height:auto;aspect-ratio:620/250;background:#0a2430;border-radius:10px;cursor:crosshair}
+#edhint{font-size:12px;color:#9cd;margin-top:5px;text-align:center}
+#edright{position:absolute;right:10px;top:58px;bottom:10px;overflow:auto;width:250px;background:#0d2f3ee8;border-radius:16px;padding:12px;border:1px solid #fff2;font-size:14px}
+#edright label{display:flex;align-items:center;justify-content:space-between;margin:7px 0}
+#edright input[type=text]{width:130px;border-radius:8px;border:0;padding:5px 8px;font-size:15px;font-family:inherit}
+#edright input[type=color]{width:60px;height:32px;border:0;background:none}
+.sw{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0}.sw i{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid #fff6}
+.st{margin:6px 0}.st b{display:inline-block;width:52px}.st span{display:inline-block;height:10px;border-radius:5px;vertical-align:middle;background:#ffe27a}
+#edDone{width:100%;margin-top:10px;font-size:18px;padding:12px;border:0;border-radius:14px;background:linear-gradient(#ffe066,#ffb733);color:#542;font-weight:bold}
+/* social */
+#social{position:fixed;top:150px;left:50%;transform:translateX(-50%);z-index:30;background:#0d2f3ef0;border:2px solid #ffe27a;border-radius:18px;padding:12px 22px;text-align:center;min-width:330px}
+#social .seq{font-size:40px;letter-spacing:10px;margin:6px 0}
+#social .seq span{display:inline-block;border-radius:12px;padding:0 4px;transition:.2s}
+#social .seq span.ok{background:#3fd18b88;transform:scale(1.15)}
+#social .seq span.cur{box-shadow:0 0 0 3px #ffe27a}
+#social .tbar{height:8px;background:#fff3;border-radius:4px;overflow:hidden}#social .tbar i{display:block;height:100%;background:#ffe27a}
+#labels{position:fixed;inset:0;z-index:12;pointer-events:none;overflow:hidden}
+.lb{position:absolute;transform:translate(-50%,-100%);background:#0009;padding:2px 8px;border-radius:9px;font-size:12px;white-space:nowrap}
+.ft{position:absolute;transform:translate(-50%,-50%);font-weight:bold;font-size:18px;text-shadow:0 2px 3px #000a;white-space:nowrap}
+#dnap{background:#0009;border-radius:10px;padding:6px 10px;font-size:12px;width:210px;line-height:1.45;margin-top:2px}#dnap .dh{color:#8fffe1;font-weight:bold;margin:2px 0}#dnap .dbar{display:flex;height:12px;border-radius:6px;overflow:hidden;margin:4px 0;background:#fff2}#dnap .dbar i{display:block;height:100%}#dnap .dl{display:flex;gap:4px;align-items:center}#dnap .dl b{margin-left:auto;color:#ffe27a}#dnap .dl small{color:#9e9;font-size:10px}#dnap .dt{margin:2px 0}#dnap .dt small{display:block;color:#acd;font-size:10.5px;margin-left:18px}#edright #dnap{width:auto;margin-top:8px}
+#endov h1{color:#ffe27a;text-align:center;font-size:40px;margin:0}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+</head><body>
+<canvas id="c3d"></canvas><canvas id="c2d"></canvas>
+<div id="labels"></div>
+<div id="hud" class="hide"><div id="stagebar">
+<div class="sn" data-s="cell"><i class="fill"></i><span>🦠 細胞</span></div>
+<div class="sn" data-s="editor"><i class="fill"></i><span>🧬 編輯器</span></div>
+<div class="sn" data-s="creature"><i class="fill"></i><span>🦎 生物</span></div>
+<div class="sn" data-s="tribe"><i class="fill"></i><span>🛖 部落</span></div>
+</div><div id="dnabox">🧬 <span id="dna">0</span></div></div>
+<button id="menuBtn" class="hide">☰ 選單</button>
+<button id="muteBtn">🔊</button>
+<div id="bars" class="hide"></div>
+<div id="prompt"></div>
+<div id="toast"></div>
+<div id="actions"></div>
+<div id="cellpanel" class="hide"><h3>🧬 細胞改造</h3><div id="cpList"></div><small style="color:#9cd">撿到發光的「零件化石」可以解鎖新零件</small></div>
+<div id="social" class="hide"><div id="soTitle"></div><div class="seq" id="soSeq"></div><div class="tbar"><i id="soT"></i></div><div style="font-size:13px;color:#bde;margin-top:6px"><kbd>1</kbd> 唱歌 🎵 &nbsp; <kbd>2</kbd> 跳舞 💃 &nbsp; <kbd>3</kbd> 擺姿勢 ✨</div></div>
+<div id="editor" class="hide">
+ <div id="pal"><h3>🔧 工具</h3><div class="tools"><button id="tMove" class="sel">✋ 移動</button><button id="tDel">🗑 刪除</button></div>
+ <div class="tools"><button id="tAdd">➕ 加一節</button><button id="tRem">➖ 減一節</button></div>
+ <h3>🧩 零件（點選後點身體）</h3><div id="palList"></div></div>
+ <div id="edwrap"><canvas id="edc" width="620" height="250"></canvas><div id="edhint">拖曳白色圓點改變脊椎形狀 · 滑鼠滾輪（或下方滑桿）改變粗細 · 選零件後點身體裝上（左右會對稱）</div>
+ <label style="font-size:13px;margin-top:4px">選取那節的粗細 <input id="segR" type="range" min="25" max="130" value="70"></label></div>
+ <div id="edright"><label>名字 <input id="edName" type="text" maxlength="8"></label>
+ <label>身體顏色 <input id="edC1" type="color"></label><div class="sw" id="sw1"></div>
+ <label>肚子/花紋色 <input id="edC2" type="color"></label><div class="sw" id="sw2"></div>
+ <div style="margin:7px 0">花紋</div><div class="tools"><button data-p="none">無</button><button data-p="spots">斑點</button><button data-p="stripes">條紋</button></div>
+ <div class="tools"><button id="edRand">🎲 隨機</button><button id="edReset">↺ 重做</button></div>
+ <div id="edStats"></div>
+ <div id="edDna"></div><button id="edDone">完成 ✓ 出發！</button></div>
+</div>
+<div id="menu" class="overlay"><div class="card">
+ <h1>演化之旅</h1><div class="sub">從潮池裡的一顆小細胞，進化成統一全島的部落！</div>
+ <div class="stages"><div><em>🦠</em>細胞</div><div><em>🧬</em>編輯器</div><div><em>🦎</em>生物</div><div><em>🛖</em>部落</div></div>
+ <button class="mb" id="btnNew">🌊 開始新遊戲</button>
+ <button class="mb alt" id="btnCont">▶ 繼續遊戲</button>
+ <button class="mb alt" id="btnHelp">📖 玩法說明</button>
+ <div style="text-align:center;font-size:12px;color:#9cd;margin-top:12px">原創小遊戲 · 進度會自動存檔 · 音樂全部由程式即時產生</div>
+</div></div>
+<div id="help" class="overlay hide"><div class="card">
+ <h2>📖 怎麼玩</h2>
+ <h3>🦠 第一階段：細胞</h3><ul><li>滑鼠移到哪裡，細胞就游到哪裡（也可以用 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>）。</li><li>草食細胞吃綠色藻類，肉食細胞吃紅色肉塊、可以咬比自己小的細胞。</li><li>小心紅色的獵食細胞和紫色的刺刺細胞！撿到金色「零件化石」可以解鎖尖刺、鞭毛、嘴巴、眼睛。</li><li>吃東西長大、收集 🧬 DNA，成長條滿了就能上岸。</li><li>🧬 <b>吃什麼就像什麼！</b>比自己小很多的細胞（有虛線圈）可以直接吞掉，打倒的細胞會掉出彩色 DNA。刺球菌、電光蟲、飛速鞘毛蟲、硬殼藻、毒液水母、隆視眼蟲……還有光合藻、硬殼種子、氣泡藻，各有不同特色。某種 DNA 到 12% 外表開始改變，30% 得到能力（例如電光蟲 → <kbd>Q</kbd> 電擊），60% 能力會變強。</li></ul>
+ <h3>🧬 第二階段：生物編輯器</h3><ul><li>拖曳白色圓點調整脊椎，滾輪改粗細，按「加一節」讓身體變長。</li><li>選零件後點身體裝上：腳（速度）、利牙（攻擊）、眼睛和翅膀（社交）……零件會影響能力。</li><li>可以換顏色和花紋，幫你的物種取名字！</li></ul>
+ <h3>🦎 第三階段：生物</h3><ul><li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 走路，<kbd>空白鍵</kbd> 跳（有翅膀可以滑翔），按住滑鼠拖曳轉鏡頭，滾輪縮放。</li><li>靠近其他生物：按 <kbd>1</kbd> 唱歌、<kbd>2</kbd> 跳舞、<kbd>3</kbd> 擺姿勢，照牠想看的順序表演就能交朋友；按 <kbd>F</kbd> 攻擊。</li><li><kbd>E</kbd> 吃果子或肉、撿骨頭（解鎖新零件）、在自己的巢按 <kbd>E</kbd> 回到編輯器。</li><li>島上有 7 種生物：飛翼鳥、劈角獸、硬甲龜、光斑蛙、巨爪蟹、長腿鹿、毒刺蜥蜴；還有 6 種植物：發光菇、尖刺仙人掌果、硬殼堅果、彈跳莓、海草葉、雲絮花。打倒生物後按 <kbd>E</kbd> 吃掉（草食動物也能吸收 DNA），或吃植物，就會越來越像牠們：長出翅膀、尖角、硬甲、巨爪、葉子……能力鍵：<kbd>Q</kbd> 衝撞、<kbd>Z</kbd> 吐毒、<kbd>X</kbd> 閃光。</li><li>跟 4 種生物交朋友或打敗牠們，就能進入部落階段。</li></ul>
+ <h3>🛖 第四階段：部落</h3><ul><li><kbd>G</kbd> 派族人採集果子、<kbd>R</kbd> 花食物招募族人、<kbd>T</kbd> 用食物馴服野生動物。</li><li>走到別的部落旁：<kbd>1</kbd> 送禮、<kbd>2</kbd> 表演、<kbd>3</kbd> 突襲。讓所有部落變成盟友或被你征服就贏了！</li></ul>
+ <button class="mb" id="btnHelpBack">知道了！</button>
+</div></div>
+<div id="diet" class="overlay hide"><div class="card" style="text-align:center">
+ <h2 style="color:#ffe27a;margin:0">你的細胞要吃什麼？</h2><div style="color:#bde">之後撿到零件還可以變成雜食喔</div>
+ <div class="opts"><button class="dopt" data-d="herb"><em>🌿</em><b>草食</b><br><small>吃綠色藻類，比較安全</small></button><button class="dopt" data-d="carn"><em>🥩</em><b>肉食</b><br><small>吃肉塊、可以咬小細胞</small></button></div>
+</div></div>
+<div id="endov" class="overlay hide"><div class="card" style="text-align:center"><h1>🎉 部落統一全島！</h1><p id="endTxt" style="font-size:17px;color:#e6f6fb"></p><p style="color:#9cd">下一個階段「文明」還在演化中……敬請期待！</p><button class="mb" id="btnEndStay">繼續逛逛</button><button class="mb alt" id="btnEndNew">從細胞重新開始</button></div></div>
+<div id="fade"><div id="fadeTitle"></div><div id="fadeSub"></div></div>
+<script type="module">
+import * as THREE from 'three';
+const $=id=>document.getElementById(id);
+const Q=new URLSearchParams(location.search);
+const TEST=Q.get('stage');
+const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,t)=>a+(b-a)*t, rnd=(a,b)=>a+Math.random()*(b-a);
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const SAVE_KEY='evoJourney_v1';
+const STAGES=['cell','editor','creature','tribe'];
+const STNAME={cell:'第一階段：細胞',editor:'第二階段：生物編輯器',creature:'第三階段：生物',tribe:'第四階段：部落'};
+
+// ---------- parts ----------
+const PDEF={
+ leg:{n:'腳',ic:'🦶',st:{spd:2},cost:0,mir:1,side:.72},
+ mouthH:{n:'草食嘴',ic:'🌿',st:{soc:1},cost:0,mouth:1,diet:'herb'},
+ mouthC:{n:'利牙嘴',ic:'🦷',st:{atk:2},cost:0,mouth:1,diet:'carn'},
+ mouthO:{n:'雜食嘴',ic:'😋',st:{atk:1,soc:1},cost:40,mouth:1,diet:'omni'},
+ eye:{n:'大眼睛',ic:'👀',st:{soc:1},cost:0,mir:1,side:.5},
+ arm:{n:'小手',ic:'✋',st:{atk:1,soc:1},cost:30,mir:1,side:.9},
+ spike:{n:'尖刺',ic:'🔺',st:{atk:2},cost:30},
+ wing:{n:'翅膀',ic:'🪶',st:{soc:2,spd:1},cost:50,mir:1,side:.92},
+ antenna:{n:'觸角',ic:'📡',st:{soc:2},cost:25,mir:1,side:.42},
+ horn:{n:'尖角',ic:'🦏',st:{atk:2},cost:0,mir:1,side:.45,trait:'horn'},
+ claw:{n:'巨爪',ic:'🦀',st:{atk:3},cost:0,mir:1,side:.85,trait:'claw'},
+ shell:{n:'硬甲殼',ic:'🐢',st:{},cost:0,trait:'shell'},
+ glow:{n:'發光斑點',ic:'✨',st:{soc:2},cost:0,trait:'glow'},
+ stinger:{n:'毒刺尾',ic:'🦂',st:{atk:1},cost:0,trait:'poison'},
+ leaf:{n:'葉子',ic:'🍃',st:{soc:1},cost:0,trait:'leaf'},
+};
+function statsOf(d){const s={spd:1,atk:0,soc:0};for(const p of d.parts){const st=PDEF[p.t]?.st||{};for(const k in st)s[k]+=st[k]}return s}
+function dietOf(d){const m=d.parts.find(p=>PDEF[p.t]?.mouth);return m?PDEF[m.t].diet:null}
+const canEat=(diet,food)=>diet==='omni'||(diet==='herb'&&food==='fruit')||(diet==='carn'&&food==='meat');
+function defaultCreature(diet){return{name:'咕嚕獸',color:'#5ec8ff',color2:'#fff3c4',pattern:'spots',
+ spine:[{x:1.7,y:1.55,r:.78},{x:.65,y:1.3,r:.86},{x:-.35,y:1.22,r:.8},{x:-1.25,y:1.3,r:.58},{x:-1.95,y:1.5,r:.36}],
+ parts:[{t:diet==='carn'?'mouthC':diet==='omni'?'mouthO':'mouthH',s:0,a:-.15},{t:'eye',s:0,a:.75},{t:'leg',s:1,a:-1.57},{t:'leg',s:3,a:-1.57}]}}
+const SYL=['咕','嚕','啾','波','比','嘟','咪','噗','喵','啦','吉','莫','蹦','多','嗚','皮','叮','呱'],SUF=['獸','龍','蟲','鳥','怪','寶','獅','兔'];
+function randCreature(rng,o={}){
+ const n=3+Math.floor(rng()*4),sp=[];let x=1.6;
+ for(let i=0;i<n;i++){const r=i===0?rnd2(rng,.5,.85):i===n-1?rnd2(rng,.25,.45):rnd2(rng,.45,.95);sp.push({x,y:rnd2(rng,1.0,1.7)+(i===0?.2:0),r});x-=rnd2(rng,.6,.95)}
+ const off=(sp[0].x+sp[n-1].x)/2;sp.forEach(p=>p.x-=off);
+ const diet=o.diet||(rng()<.45?'herb':rng()<.6?'carn':'omni');
+ const parts=[{t:diet==='carn'?'mouthC':diet==='omni'?'mouthO':'mouthH',s:0,a:-.2}];
+ parts.push({t:'eye',s:0,a:rnd2(rng,.5,1.1)}); if(rng()<.3)parts.push({t:'eye',s:rng()<.5?0:1,a:rnd2(rng,1.2,1.5)});
+ const lp=rng()<.15?0:1+Math.floor(rng()*Math.min(3,n-1));const used=new Set();
+ for(let i=0;i<lp;i++){let s=1+Math.floor(rng()*(n-1));if(used.has(s))continue;used.add(s);parts.push({t:'leg',s,a:-1.57})}
+ if(lp===0&&n>3)parts.push({t:'leg',s:1,a:-1.57});
+ if(rng()<.4)parts.push({t:'arm',s:Math.min(1,n-1),a:-.4});
+ if(o.aggr||rng()<.35)for(let i=1;i<n;i++)if(rng()<.6)parts.push({t:'spike',s:i,a:rnd2(rng,1.3,1.8)});
+ if(rng()<.25)parts.push({t:'wing',s:1,a:1.1});
+ if(rng()<.35)parts.push({t:'antenna',s:0,a:1.35});
+ const h=rng(),c1=new THREE.Color().setHSL(h,rnd2(rng,.5,.8),rnd2(rng,.5,.65)),c2=new THREE.Color().setHSL((h+rnd2(rng,.1,.5))%1,.6,.82);
+ return{name:SYL[Math.floor(rng()*SYL.length)]+SYL[Math.floor(rng()*SYL.length)]+SUF[Math.floor(rng()*SUF.length)],color:'#'+c1.getHexString(),color2:'#'+c2.getHexString(),pattern:['none','spots','stripes'][Math.floor(rng()*3)],spine:sp,parts}}
+function rnd2(r,a,b){return a+r()*(b-a)}
+
+// ---------- save ----------
+let S=null;
+function newSave(){return{v:1,stage:'cell',dna:0,diet:null,growth:0,cellUnl:{},cellOn:{},creature:null,unlocked:{leg:1,eye:1,mouthH:1,mouthC:1},seed:Math.floor(Math.random()*1e9),done:{},cr:null,tr:null,edReturn:'creature'}}
+function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)return s}catch(e){}return null}
+function save(){if(TEST||!S)return;try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
+
+// ---------- UI helpers ----------
+function toast(t,ms=2600){const d=document.createElement('div');d.className='tm';d.textContent=t;$('toast').appendChild(d);setTimeout(()=>d.remove(),ms);while($('toast').children.length>4)$('toast').firstChild.remove()}
+function setDNA(){$('dna').textContent=Math.floor(S.dna)}
+function addDNA(n){S.dna+=n;setDNA();const b=$('dnabox');b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop')}
+function stageProgress(st){if(S.done[st])return 100;if(st==='cell')return S.growth;if(st===S.stage&&curProgress)return curProgress();return 0}
+let curProgress=null;
+function updateStageBar(){document.querySelectorAll('.sn').forEach(el=>{const s=el.dataset.s;el.classList.toggle('cur',s===S.stage);el.classList.toggle('done',!!S.done[s]);el.querySelector('.fill').style.width=clamp(stageProgress(s),0,100)+'%'})}
+function setActions(list){const a=$('actions');a.innerHTML='';for(const it of list){const b=document.createElement('button');b.className='ab'+(it.cls?' '+it.cls:'');b.textContent=it.t;b.onclick=e=>{e.stopPropagation();initAudio();sfx.click();it.f()};if(it.id)b.id=it.id;a.appendChild(b)}}
+function setBars(html){$('bars').innerHTML=html}
+function bar(label,v,max,col){return`<div class="bar"><i style="width:${clamp(v/max*100,0,100)}%;background:${col}"></i><b>${label} ${Math.ceil(v)}/${max}</b></div>`}
+function fade(title,sub,mid,hold=1200){const f=$('fade');$('fadeTitle').textContent=title;$('fadeSub').textContent=sub||'';f.classList.add('on');sfx.whoosh();setTimeout(()=>{mid&&mid();setTimeout(()=>f.classList.remove('on'),hold)},650)}
+
+// ---------- labels ----------
+const LBL=[];
+function addLabel(html,getPos,cls='lb'){const el=document.createElement('div');el.className=cls;el.innerHTML=html;$('labels').appendChild(el);const o={el,getPos,set(h){if(el._h!==h){el.innerHTML=h;el._h=h}}};LBL.push(o);return o}
+function floatText(pos,text,color='#fff'){const o=addLabel(text,null,'ft');o.el.style.color=color;o.pos=pos.clone();o.life=1.2;o.float=true;return o}
+function clearLabels(){LBL.length=0;$('labels').innerHTML=''}
+const _v=new THREE.Vector3();
+function updateLabels(cam,dt){const w=innerWidth,h=innerHeight;for(let i=LBL.length-1;i>=0;i--){const o=LBL[i];let p;if(o.float){o.life-=dt;o.pos.y+=dt*1.6;if(o.life<=0){o.el.remove();LBL.splice(i,1);continue}o.el.style.opacity=Math.min(1,o.life*2);p=o.pos}else p=o.getPos();if(!p){o.el.style.display='none';continue}_v.copy(p).project(cam);if(_v.z>1||Math.abs(_v.x)>1.2||Math.abs(_v.y)>1.2){o.el.style.display='none';continue}const sy=(1-_v.y)/2*h;if(!o.float&&sy<70){o.el.style.display='none';continue}o.el.style.display='';o.el.style.left=((_v.x+1)/2*w)+'px';o.el.style.top=sy+'px'}}
+
+// ---------- audio ----------
+const AU={ctx:null,muted:false};
+function initAudio(){if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();return}try{const C=window.AudioContext||window.webkitAudioContext;AU.ctx=new C();const c=AU.ctx;AU.master=c.createGain();AU.master.gain.value=AU.muted?0:.8;AU.master.connect(c.destination);AU.mus=c.createGain();AU.mus.gain.value=.32;AU.mus.connect(AU.master);AU.sfx=c.createGain();AU.sfx.gain.value=.7;AU.sfx.connect(AU.master);
+ const len=c.sampleRate;const b=c.createBuffer(1,len,c.sampleRate);const d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;AU.noise=b;
+ const dl=c.createDelay();dl.delayTime.value=.33;const fb=c.createGain();fb.gain.value=.3;const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2200;AU.echo=c.createGain();AU.echo.gain.value=.35;AU.echo.connect(dl);dl.connect(lp);lp.connect(fb);fb.connect(dl);lp.connect(AU.mus);MUS.next=c.currentTime+.1}catch(e){console.warn(e)}}
+const mtof=m=>440*Math.pow(2,(m-69)/12);
+function tone(f,dur,o={}){const c=AU.ctx;if(!c)return;const t=o.t??c.currentTime;const os=c.createOscillator();os.type=o.type||'sine';os.frequency.setValueAtTime(f,t);if(o.to)os.frequency.exponentialRampToValueAtTime(o.to,t+dur);const g=c.createGain();const v=o.v??.3,at=o.at??.005;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+at);g.gain.exponentialRampToValueAtTime(.0008,t+dur);let n=os;if(o.lp){const f2=c.createBiquadFilter();f2.type=o.bp?'bandpass':'lowpass';f2.frequency.value=o.lp;f2.Q.value=o.q||1;n.connect(f2);n=f2}if(o.vib){const l=c.createOscillator(),lg=c.createGain();l.frequency.value=o.vib;lg.gain.value=f*.02;l.connect(lg);lg.connect(os.frequency);l.start(t);l.stop(t+dur)}n.connect(g);g.connect(o.bus||AU.sfx);if(o.echo)g.connect(AU.echo);os.start(t);os.stop(t+dur+.05)}
+function noiseHit(dur,o={}){const c=AU.ctx;if(!c)return;const t=o.t??c.currentTime;const s=c.createBufferSource();s.buffer=AU.noise;const f=c.createBiquadFilter();f.type=o.ft||'bandpass';f.frequency.setValueAtTime(o.f||1000,t);if(o.fto)f.frequency.exponentialRampToValueAtTime(o.fto,t+dur);f.Q.value=o.q||1;const g=c.createGain();g.gain.setValueAtTime(o.v??.3,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);s.connect(f);f.connect(g);g.connect(o.bus||AU.sfx);s.start(t,Math.random()*.5);s.stop(t+dur+.02)}
+const sfx={
+ click(){tone(900,.06,{type:'triangle',v:.15})},
+ eat(){tone(520,.08,{type:'triangle',v:.25,to:780});tone(880,.1,{type:'sine',v:.18,t:AU.ctx&&AU.ctx.currentTime+.06})},
+ bubble(){tone(rnd(300,600),.12,{v:.15,to:rnd(900,1400)})},
+ dna(){if(!AU.ctx)return;const t=AU.ctx.currentTime;[1320,1760,2093].forEach((f,i)=>tone(f,.15,{v:.1,t:t+i*.05,type:'sine'}))},
+ hurt(){tone(220,.25,{type:'sawtooth',v:.18,to:90,lp:900});noiseHit(.15,{f:600,v:.2})},
+ bite(){noiseHit(.08,{f:2500,v:.3,q:2});tone(160,.12,{type:'square',v:.12,to:70,lp:700})},
+ unlock(){if(!AU.ctx)return;const t=AU.ctx.currentTime;[0,4,7,12,16].forEach((s,i)=>tone(mtof(72+s),.3,{type:'triangle',v:.16,t:t+i*.08,echo:1}))},
+ good(){if(!AU.ctx)return;const t=AU.ctx.currentTime;tone(988,.12,{type:'triangle',v:.18,t});tone(1319,.2,{type:'triangle',v:.18,t:t+.09})},
+ bad(){tone(180,.25,{type:'square',v:.1,lp:600})},
+ sing(){if(!AU.ctx)return;const t=AU.ctx.currentTime,b=60+[0,2,4,7,9][Math.floor(Math.random()*5)];[0,4,7].forEach((s,i)=>tone(mtof(b+s),.28,{type:'sawtooth',v:.12,t:t+i*.16,lp:900,bp:1,q:4,vib:6,at:.04,echo:1}))},
+ dance(){if(!AU.ctx)return;const t=AU.ctx.currentTime;[0,.12,.24,.36].forEach((d,i)=>tone(i%2?220:160,.15,{v:.3,t:t+d,to:80}))},
+ pose(){tone(400,.35,{type:'triangle',v:.15,to:1400});noiseHit(.3,{f:3000,v:.08,ft:'highpass'})},
+ jump(){tone(300,.15,{type:'sine',v:.15,to:600})},
+ pop(){tone(300,.12,{v:.25,to:900})},
+ whoosh(){noiseHit(.7,{f:300,fto:2400,v:.2,q:.8})},
+ heart(){if(!AU.ctx)return;const t=AU.ctx.currentTime;[0,4,7,12].forEach((s,i)=>tone(mtof(76+s),.25,{type:'sine',v:.14,t:t+i*.07,echo:1}))},
+ win(){if(!AU.ctx)return;const t=AU.ctx.currentTime;[0,4,7,12,7,12,16,19].forEach((s,i)=>tone(mtof(67+s),.35,{type:'triangle',v:.16,t:t+i*.11,echo:1}))},
+ drum(){tone(120,.2,{v:.4,to:50})},
+};
+// procedural music
+const MUS={next:0,step:0,key:'menu',motifs:{}};
+const MCFG={menu:{bpm:84,root:57,sc:[0,2,4,7,9],ch:[0,9,5,7],inst:'bell'},cell:{bpm:66,root:50,sc:[0,3,5,7,10],ch:[0,8,5,3],inst:'bubble'},editor:{bpm:112,root:60,sc:[0,2,4,7,9],ch:[0,5,9,7],inst:'marimba'},creature:{bpm:98,root:55,sc:[0,2,4,7,9],ch:[0,9,5,7],inst:'pluck'},tribe:{bpm:104,root:52,sc:[0,3,5,7,10],ch:[0,8,10,7],inst:'flute'}};
+function motif(key,k){const id=key+k;if(MUS.motifs[id])return MUS.motifs[id];const r=mulberry(key.length*97+k*13+7);const m=[];let n=Math.floor(r()*5);for(let i=0;i<16;i++){if(r()<(i%4===0?.85:.4)){n=clamp(n+Math.floor(r()*5)-2,0,8);m.push(n)}else m.push(-1)}return MUS.motifs[id]=m}
+function musicTick(){const c=AU.ctx;if(!c||AU.muted)return;const cf=MCFG[MUS.key]||MCFG.menu;const spb=60/cf.bpm/2;if(MUS.next<c.currentTime-.5)MUS.next=c.currentTime+.05;
+ while(MUS.next<c.currentTime+.25){const t=MUS.next,st=MUS.step%16,bar=Math.floor(MUS.step/16)%4,root=cf.root+cf.ch[bar],B=AU.mus;
+  if(st===0){[0,cf.sc[2]===4?4:3,7].forEach(s=>tone(mtof(root+s),spb*16,{type:'sine',v:.05,t,at:.6,bus:B}))}
+  if(st===0||st===8||(MUS.key==='creature'&&st===11))tone(mtof(root-12),spb*3,{type:'triangle',v:.16,t,bus:B});
+  const m=motif(MUS.key,bar===2?1:0)[st];
+  if(m>=0){const deg=cf.sc[m%5]+12*Math.floor(m/5),f=mtof(cf.root+12+deg+(bar===3&&m%2?0:0));
+   if(cf.inst==='bubble')tone(f,.5,{type:'sine',v:.1,t,lp:1200,echo:1,bus:B});
+   else if(cf.inst==='marimba')tone(f,.25,{type:'triangle',v:.13,t,bus:B});
+   else if(cf.inst==='flute')tone(f,spb*1.8,{type:'sine',v:.11,t,at:.05,vib:5,echo:1,bus:B});
+   else if(cf.inst==='bell')tone(f*2,.8,{type:'sine',v:.07,t,echo:1,bus:B});
+   else tone(f,.3,{type:'triangle',v:.1,t,lp:2500,echo:1,bus:B})}
+  if(MUS.key==='creature'||MUS.key==='editor'){if(st%8===0)tone(110,.18,{v:.22,t,to:45,bus:B});if(st%2===1)noiseHit(.04,{f:7000,v:.035,t,ft:'highpass',bus:B})}
+  if(MUS.key==='tribe'){if([0,3,6,8,11,14].includes(st))tone(st%8===0?95:150,.22,{v:.25,t,to:60,bus:B});if(st===4||st===12)noiseHit(.1,{f:1800,v:.08,t,bus:B})}
+  if(MUS.key==='cell'&&Math.random()<.12)tone(rnd(400,900),.1,{v:.04,t,to:rnd(1000,1800),bus:B});
+  MUS.next+=spb;MUS.step++}}
+function setMusic(k){if(MUS.key!==k){MUS.key=k;MUS.step=0}}
+// ---------- DNA SYSTEM: eat creatures & plants -> become like them ----------
+const CSRC={self:{n:'原本的自己',ic:'🔵',col:'#4fc3ff'},
+ grazer:{n:'綠泡藻蟲',ic:'🟢',col:'#8ee06a',tr:'regen',hue:105},
+ hunter:{n:'利齒掠食菌',ic:'🦷',col:'#ff6b5e',tr:'bite',hue:5},
+ spiky:{n:'刺球菌',ic:'🦔',col:'#b07cff',tr:'spike',hue:280},
+ shock:{n:'電光蟲',ic:'⚡',col:'#ffe04a',tr:'shock',hue:52},
+ swift:{n:'飛速鞘毛蟲',ic:'💨',col:'#4fe6e6',tr:'swift',hue:182},
+ shell:{n:'硬殼藻',ic:'🐚',col:'#c8925a',tr:'shell',hue:30},
+ poison:{n:'毒液水母',ic:'🪼',col:'#ff7ad9',tr:'poison',hue:320},
+ eye:{n:'隆視眼蟲',ic:'👁️',col:'#6f8cff',tr:'eye',hue:228},
+ photo:{n:'光合藻',ic:'🌱',col:'#6dff7a',tr:'regen',plant:1},
+ seed:{n:'硬殼種子',ic:'🌰',col:'#a8743f',tr:'shell',plant:1},
+ bubble:{n:'氣泡藻',ic:'🫧',col:'#9ee8ff',tr:'swift',plant:1}};
+const CTR={spike:{n:'尖刺',ab:'尖刺反傷',ab2:'反傷加倍'},shock:{n:'電光',ab:'電擊爆發（Q 鍵）',ab2:'電擊範圍更大'},swift:{n:'鞭毛',ab:'游泳加速',ab2:'超高速'},shell:{n:'硬殼',ab:'硬殼防禦',ab2:'硬殼更厚'},poison:{n:'毒液觸手',ab:'毒液尾跡',ab2:'劇毒尾跡'},eye:{n:'多眼',ab:'視野變大',ab2:'超廣視野'},bite:{n:'利齒',ab:'咬合攻擊',ab2:'咬得更痛'},regen:{n:'葉綠體',ab:'光合作用回血',ab2:'快速回血'}};
+const KSRC={self:{n:'原本的自己',ic:'⭐'},
+ wingbird:{n:'飛翼鳥',ic:'🐦',col:'#7ec8ff',tr:'wing'},horn:{n:'劈角獸',ic:'🦏',col:'#c0703a',tr:'horn'},turtle:{n:'硬甲龜',ic:'🐢',col:'#6aa86a',tr:'shell'},frog:{n:'光斑蛙',ic:'🐸',col:'#5fd16b',tr:'glow'},crab:{n:'巨爪蟹',ic:'🦀',col:'#ff6a4d',tr:'claw'},deer:{n:'長腿鹿',ic:'🦌',col:'#d9a066',tr:'leg'},lizard:{n:'毒刺蜥蜴',ic:'🦎',col:'#8a5cd6',tr:'poison'},
+ shroom:{n:'發光菇',ic:'🍄',col:'#4ff0ff',tr:'glow',plant:1},cactus:{n:'尖刺仙人掌果',ic:'🌵',col:'#7fbf4a',tr:'spike',plant:1},nut:{n:'硬殼堅果',ic:'🌰',col:'#9a6a3a',tr:'shell',plant:1},berry:{n:'彈跳莓',ic:'🫐',col:'#6a7dff',tr:'bounce',plant:1},kelp:{n:'海草葉',ic:'🌿',col:'#3fae6a',tr:'leaf',plant:1},cloud:{n:'雲絮花',ic:'☁️',col:'#eef3ff',tr:'wing',plant:1}};
+const KTR={wing:{n:'翅膀',ab:'滑翔（空中按住空白鍵）',ab2:'跳得更高、滑得更遠'},horn:{n:'尖角',ab:'衝撞（Q 鍵）',ab2:'衝撞更猛'},shell:{n:'硬甲',ab:'硬甲防禦',ab2:'硬甲更厚'},glow:{n:'發光斑點',ab:'閃光震暈（X 鍵）、唱歌更好聽',ab2:'閃光更強'},claw:{n:'巨爪',ab:'爪擊加強',ab2:'超強爪擊'},leg:{n:'長腿',ab:'跑得更快',ab2:'飛毛腿'},poison:{n:'毒刺尾',ab:'吐毒液（Z 鍵）',ab2:'劇毒'},spike:{n:'背刺',ab:'尖刺反傷',ab2:'反傷加倍'},leaf:{n:'葉子',ab:'光合作用回血、比較不會餓',ab2:'快速回血'},bounce:{n:'彈簧腳',ab:'超級跳',ab2:'跳得超高'}};
+const C2K={spike:'spike',shock:'glow',swift:'leg',shell:'shell',poison:'poison',eye:'wing',bite:'claw',regen:'leaf'};
+function dnaMap(stage){if(stage==='cell'){if(!S.dnaC)S.dnaC={self:40};return S.dnaC}
+ if(!S.dnaK){S.dnaK={self:40};if(S.dnaC)for(const k in S.dnaC)if(k!=='self'&&S.dnaC[k]>0)S.dnaK['c_'+k]=+(S.dnaC[k]*.6).toFixed(1)}return S.dnaK}
+function srcInfo(stage,k){if(stage==='cell')return CSRC[k];if(k.startsWith('c_')){const c=CSRC[k.slice(2)];return c?{n:'細胞時期・'+c.n,ic:c.ic,col:c.col,tr:C2K[c.tr],old:1}:null}return KSRC[k]}
+function dnaPcts(stage){const m=dnaMap(stage);let t=0;for(const k in m)t+=m[k];const o={};for(const k in m)o[k]=m[k]/(t||1);return o}
+function traitPcts(stage){const p=dnaPcts(stage),o={};for(const k in p){const s=srcInfo(stage,k);if(s&&s.tr)o[s.tr]=(o[s.tr]||0)+p[k]}return o}
+const tierOf=v=>v>=.6?3:v>=.3?2:v>=.12?1:0;
+function trLv(stage,tr){return(traitPcts(stage)[tr]||0)}
+function topSrc(stage,tr){const m=dnaMap(stage);let b=null,bv=-1;for(const k in m){const s=srcInfo(stage,k);if(s&&s.tr===tr&&m[k]>bv){bv=m[k];b=s}}return b}
+let onTier=null;
+function gainDNA(stage,k,n){const m=dnaMap(stage);m[k]=+((m[k]||0)+n).toFixed(1);const tk=stage==='cell'?'tierC':'tierK';S[tk]=S[tk]||{};const tp=traitPcts(stage),TT=stage==='cell'?CTR:KTR;
+ for(const tr in TT){const t=tierOf(tp[tr]||0),old=S[tk][tr]||0;if(t>old){S[tk][tr]=t;const src=srcInfo(stage,k);const nm=(src&&src.tr===tr?src:topSrc(stage,tr))?.n||'';const T=TT[tr];
+  toast(t===1?`🧬 你開始有點像「${nm}」了！身上長出了${T.n}`:t===2?`✨ 你變得更像「${nm}」了！獲得能力：${T.ab}`:`🌟 你越來越像「${nm}」了！能力強化：${T.ab2}`,4500);if(t>=2)sfx.unlock();onTier&&onTier(stage,tr,t)}}}
+function dnaPanel(stage){const p=dnaPcts(stage),tp=traitPcts(stage),TT=stage==='cell'?CTR:KTR,ks=Object.keys(p).sort((a,b)=>p[b]-p[a]);let bar='',list='';
+ const colOf=(k,s)=>s.col||(stage==='cell'?'#4fc3ff':(S.creature?.color||'#fff'));
+ for(const k of ks){const s=srcInfo(stage,k);if(s)bar+=`<i style="width:${p[k]*100}%;background:${colOf(k,s)}"></i>`}
+ for(const k of ks.slice(0,6)){const s=srcInfo(stage,k);if(!s||p[k]<.005)continue;list+=`<div class="dl"><span style="color:${colOf(k,s)}">●</span>${s.ic} ${s.n}${s.plant?' <small>植物</small>':''}<b>${Math.round(p[k]*100)}%</b></div>`}
+ let trs='';Object.keys(tp).sort((a,b)=>tp[b]-tp[a]).forEach(tr=>{const v=tp[tr];if(v<.03||!TT[tr])return;const t=tierOf(v);trs+=`<div class="dt">${t>=3?'🌟':t>=2?'✅':t>=1?'🌱':'🔒'} ${TT[tr].n} ${Math.round(v*100)}%<small>${t>=3?TT[tr].ab2:t>=2?TT[tr].ab:'30% 解鎖：'+TT[tr].ab}</small></div>`});
+ return`<div id="dnap"><div class="dh">🧬 DNA 組成（吃什麼就像什麼）</div><div class="dbar">${bar}</div>${list}${trs?'<div class="dh">特徵與能力</div>'+trs:''}</div>`}
+// creature-stage animal templates
+const KSPEC={
+ wingbird:{c2:'#fff6d0',temper:'shy',scale:.55,hp:.8,spd:1.3,atk:.8,spine:[[.8,1.9,.5],[0,1.75,.68],[-.75,1.95,.32]],parts:[['mouthH',0,-.1],['eye',0,.8],['leg',1],['wing',1,1.1,1.3]]},
+ horn:{c2:'#f3d7b0',temper:'aggressive',scale:.75,hp:1.3,spd:1,atk:1.3,spine:[[1.6,1.6,.7],[.6,1.4,.95],[-.5,1.35,.9],[-1.5,1.45,.5]],parts:[['mouthH',0,-.2],['eye',0,.7],['horn',0,.95,1.4],['leg',1],['leg',3]]},
+ turtle:{c2:'#e8d9a0',temper:'shy',scale:.65,hp:2.2,spd:.6,atk:.7,spine:[[1.3,.95,.42],[.4,.9,.7],[-.5,.9,.72],[-1.2,.85,.3]],parts:[['mouthH',0,-.1],['eye',0,.8],['shell',2,1.57,1.2],['leg',1],['leg',2]]},
+ frog:{c2:'#fff59a',temper:'friendly',scale:.5,hp:.9,spd:1.1,atk:.6,pattern:'spots',spine:[[.7,1.1,.65],[-.2,1,.75],[-.8,1,.4]],parts:[['mouthH',0,-.1],['eye',0,1.1],['glow',0,1.4,1.2],['leg',1],['leg',2]]},
+ crab:{c2:'#ffd2c2',temper:'aggressive',scale:.6,hp:1.2,spd:.9,atk:1.6,spine:[[.5,1,.6],[-.3,1,.75],[-.9,1,.4]],parts:[['mouthC',0,-.2],['eye',0,1.3],['claw',0,-.5,1.3],['antenna',0,1.5],['leg',1],['leg',2]]},
+ deer:{c2:'#fff3e0',temper:'shy',scale:.7,hp:1,spd:1.7,atk:.8,legMul:1.8,spine:[[1.5,2.2,.45],[.7,1.8,.5],[-.2,1.6,.65],[-1.1,1.65,.45]],parts:[['mouthH',0,-.1],['eye',0,.7],['horn',0,1.35,.7],['leg',2],['leg',3]]},
+ lizard:{c2:'#c6ff6a',temper:'aggressive',scale:.6,hp:1,spd:1.2,atk:1.1,pattern:'stripes',spine:[[2,.8,.4],[1.3,.75,.5],[.5,.75,.52],[-.3,.75,.45],[-1.1,.8,.32],[-1.8,.9,.2]],parts:[['mouthC',0,-.2],['eye',0,.8],['leg',1],['leg',3],['spike',2,1.5],['spike',3,1.5],['stinger',5,2.3,1.2]]}};
+function kspecCreature(k){const t=KSPEC[k];return{name:KSRC[k].n,color:KSRC[k].col,color2:t.c2,pattern:t.pattern||'none',legMul:t.legMul,spine:t.spine.map(([x,y,r])=>({x,y,r})),parts:t.parts.map(([tt,s,a,sc])=>({t:tt,s,a:a??-1.57,sc}))}}
+const TPART={wing:{t:'wing',s:1,a:1.1},horn:{t:'horn',s:0,a:.95},shell:{t:'shell',s:'mid',a:1.57},glow:{t:'glow',s:0,a:1.4},claw:{t:'claw',s:0,a:-.5},poison:{t:'stinger',s:'last',a:2.3},spike:{t:'spike',s:'all',a:1.5},leaf:{t:'leaf',s:0,a:1.5}};
+function morphed(base){const d=JSON.parse(JSON.stringify(base));const p=dnaPcts('creature'),tp=traitPcts('creature'),n=d.spine.length;
+ const c=new THREE.Color(d.color),c2=new THREE.Color(d.color2);
+ Object.keys(p).filter(k=>k!=='self').sort((a,b)=>p[a]-p[b]).forEach(k=>{const s=srcInfo('creature',k);if(s&&s.col)c.lerp(new THREE.Color(s.col),Math.min(.8,p[k]*1.2))});
+ const hs={};c.getHSL(hs);if(Object.keys(p).length>1)c.setHSL(hs.h,Math.max(hs.s,.5),clamp(hs.l,.45,.65));d.color='#'+c.getHexString();
+ for(const tr in tp){const v=tp[tr];if(v<.12)continue;const sc=.45+clamp((v-.12)/.5,0,1)*.85,tpp=TPART[tr];
+  if(tpp){if(tpp.t!=='spike'&&d.parts.some(q=>q.t===tpp.t)){d.parts.filter(q=>q.t===tpp.t).forEach(q=>q.sc=Math.max(q.sc||1,sc))}
+   else if(tpp.s==='all'){for(let i=1;i<n;i++)d.parts.push({t:'spike',s:i,a:1.5,sc,auto:1})}
+   else d.parts.push({t:tpp.t,a:tpp.a,s:tpp.s==='mid'?Math.floor(n/2):tpp.s==='last'?n-1:Math.min(tpp.s,n-1),sc,auto:1})}
+  if(tr==='leg'){d.legMul=Math.max(d.legMul||1,1+v*1.5);if(!d.parts.some(q=>q.t==='leg'))d.parts.push({t:'leg',s:Math.min(1,n-1),a:-1.57,auto:1})}
+  if(tr==='bounce'){d.footMul=1+v*1.8;if(!d.parts.some(q=>q.t==='leg'))d.parts.push({t:'leg',s:Math.min(1,n-1),a:-1.57,auto:1})}
+  if(tr==='leaf'&&v>=.25)d.pattern='leaf'}
+ return d}
+function morphSig(){const tp=traitPcts('creature');return Object.keys(tp).sort().map(k=>k+Math.round(tp[k]*20)).join(',')+'|'+JSON.stringify(Object.values(dnaPcts('creature')).map(v=>Math.round(v*20)))}
+// ---------- 3D creature builder ----------
+const _Y=new THREE.Vector3(0,1,0),_Zv=new THREE.Vector3(0,0,1);
+const GEO={sph:new THREE.SphereGeometry(1,20,14),sphLo:new THREE.SphereGeometry(1,10,8),cone:new THREE.ConeGeometry(1,1,12),cyl:new THREE.CylinderGeometry(1,1,1,10)};
+function partDir(t,a,side){const d=PDEF[t];let x=Math.cos(a),y=Math.sin(a),z=0;if(d.mir){const s=d.side,k=Math.sqrt(1-s*s);x*=k;y*=k;z=s*side}return new THREE.Vector3(x,y,z).normalize()}
+function colorAt(c1,c2,pat,v,ny){const c=c1.clone();if(ny<-.2)c.lerp(c2,clamp((-ny-.2)*2,0,.9));else if(pat==='spots'&&ny>-.1){const s=Math.sin(v.x*5.3)+Math.sin(v.z*6.1+1.3)+Math.sin(v.y*4.7+v.x*2);if(s>1.6)c.lerp(c2,.75)}else if(pat==='stripes'&&ny>0){if(Math.sin(v.x*6)>.45)c.multiplyScalar(.72)}else if(pat==='leaf'&&ny>-.15){const q=Math.abs(Math.sin(v.x*4.2+Math.abs(v.z)*5.5));if(q<.16)c.lerp(LEAFC,.75);else if(Math.sin(v.x*1.7+v.z*2.3)>.55)c.lerp(LEAFC2,.45)}return c}
+const LEAFC=new THREE.Color('#2f8f3a'),LEAFC2=new THREE.Color('#9be36a');
+function buildCreature(d,o={}){
+ const g=new THREE.Group(),body=new THREE.Group();g.add(body);
+ const c1=new THREE.Color(d.color),c2=new THREE.Color(d.color2),sp=d.spine,n=sp.length;
+ const ud={legs:[],arms:[],wings:[],ants:[],body,mats:[],shift:0,t:Math.random()*10,act:null,actT:0};g.userData=ud;
+ const mat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.5,metalness:0});ud.mats.push(mat);
+ const curve=new THREE.CatmullRomCurve3(sp.map(p=>new THREE.Vector3(p.x,p.y,0)),false,'catmullrom',.5);
+ const M=n*10,K=22,samples=[];let minY=1e9,sumR=0;
+ for(let i=0;i<=M;i++){const t=i/M,P=curve.getPoint(t),T=curve.getTangent(t),f=t*(n-1),i0=Math.min(n-2,Math.floor(f)),ft=f-i0,s=ft*ft*(3-2*ft),r=lerp(sp[i0].r,sp[i0+1].r,s);samples.push({P,T,r});minY=Math.min(minY,P.y-r);sumR+=r}
+ const pos=[],col=[],idx=[];
+ for(let i=0;i<=M;i++){const{P,T,r}=samples[i];const N=new THREE.Vector3().crossVectors(_Zv,T).normalize();if(N.y<0)N.negate();
+  for(let k=0;k<=K;k++){const ph=k/K*Math.PI*2,v=P.clone().addScaledVector(N,Math.cos(ph)*r).addScaledVector(_Zv,Math.sin(ph)*r*.94);pos.push(v.x,v.y,v.z);const c=colorAt(c1,c2,d.pattern,v,(v.y-P.y)/r);col.push(c.r,c.g,c.b)}}
+ for(let i=0;i<M;i++)for(let k=0;k<K;k++){const a=i*(K+1)+k,b=a+K+1;idx.push(a,b,a+1,b,b+1,a+1)}
+ const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setAttribute('color',new THREE.Float32BufferAttribute(col,3));geo.setIndex(idx);geo.computeVertexNormals();
+ // ensure outward normals: test first ring top vertex
+ const nTest=new THREE.Vector3(geo.attributes.normal.getX(5*(K+1)),geo.attributes.normal.getY(5*(K+1)),0),pTest=new THREE.Vector3(pos[15*(K+1)],pos[15*(K+1)+1],0).sub(samples[5].P);
+ if(nTest.dot(pTest)<0){for(let i=0;i<idx.length;i+=3){const t=idx[i+1];idx[i+1]=idx[i+2];idx[i+2]=t}geo.setIndex(idx);geo.computeVertexNormals()}
+ const tube=new THREE.Mesh(geo,mat);tube.castShadow=true;body.add(tube);
+ for(const e of[0,M]){const{P,r}=samples[e];const sg=new THREE.SphereGeometry(r*.995,K,14);const pa=sg.attributes.position,cc=[];for(let i=0;i<pa.count;i++){const v=new THREE.Vector3(pa.getX(i),pa.getY(i),pa.getZ(i)*.94);pa.setXYZ(i,v.x,v.y,v.z);v.add(P);const c=colorAt(c1,c2,d.pattern,v,(v.y-P.y)/r);cc.push(c.r,c.g,c.b)}sg.setAttribute('color',new THREE.Float32BufferAttribute(cc,3));sg.computeVertexNormals();const m=new THREE.Mesh(sg,mat);m.position.copy(P);m.castShadow=true;body.add(m)}
+ const hasLeg=d.parts.some(p=>p.t==='leg'),avgR=sumR/(M+1);
+ const lift=hasLeg?Math.max(.55,avgR*1.05)*(d.legMul||1):.02;ud.shift=lift-minY;body.position.y=ud.shift;
+ const limbMat=new THREE.MeshStandardMaterial({color:c1.clone().multiplyScalar(.9),roughness:.5});ud.mats.push(limbMat);
+ const footMat=new THREE.MeshStandardMaterial({color:c2,roughness:.6});ud.mats.push(footMat);
+ const berryMat=new THREE.MeshStandardMaterial({color:0x6a7dff,roughness:.3});ud.mats.push(berryMat);const white=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.25}),black=new THREE.MeshStandardMaterial({color:0x111122,roughness:.2}),dark=new THREE.MeshStandardMaterial({color:0x5a1626,roughness:.6}),pink=new THREE.MeshStandardMaterial({color:0xff8fb0,transparent:true,opacity:.55,roughness:.8}),bone=new THREE.MeshStandardMaterial({color:0xfff2d6,roughness:.4});
+ const M3=(geo,m,s,p)=>{const x=new THREE.Mesh(geo,m);if(s)x.scale.copy(s);if(p)x.position.copy(p);x.castShadow=true;return x},V=(x,y,z)=>new THREE.Vector3(x,y,z);
+ for(const p of d.parts){const def=PDEF[p.t];if(!def)continue;const seg=sp[clamp(p.s,0,n-1)],r=seg.r,C=V(seg.x,seg.y,0),K=p.sc||1;
+  const sides=def.mir?[1,-1]:[0];
+  for(const sd of sides){const a=p.t==='leg'?-1.57:p.a,dir=partDir(p.t,a,sd),S=C.clone().addScaledVector(dir,r*.9);
+   if(p.t==='leg'){const L=S.y+ud.shift,th=.09+r*.1;const lg=new THREE.Group();lg.position.copy(S);const len=Math.max(.06,L-th*2.4);const cap=M3(new THREE.CapsuleGeometry(th,len,5,10),limbMat,null,V(0,-L/2+th*.6,0));lg.add(cap);const fm=d.footMul||1;const ft=M3(GEO.sph,d.footMul?berryMat:footMat,V(th*2.3*fm,th*.9*fm,th*1.7*fm),V(th*.7,-L+th*.9*fm,0));lg.add(ft);lg.userData.ph=(sd>0?0:Math.PI)+(p.s%2)*Math.PI;body.add(lg);ud.legs.push(lg)}
+   else if(p.t==='arm'){const th=.07+r*.06,len=.55+r*.35;const ag=new THREE.Group();ag.position.copy(S);const inner=new THREE.Group();inner.rotation.x=sd*1.0;ag.add(inner);inner.add(M3(new THREE.CapsuleGeometry(th,len,5,8),limbMat,null,V(0,-len/2,0)));const hand=M3(GEO.sph,footMat,V(th*1.8,th*1.8,th*1.8),V(0,-len-th,0));inner.add(hand);for(let k=-1;k<=1;k++){const cl=M3(GEO.cone,bone,V(th*.45,th*1.6,th*.45),V(th*1.2,-len-th*1.6,k*th*.9));cl.rotation.z=Math.PI*.75;inner.add(cl)}ag.userData.ph=sd>0?Math.PI:0;ag.userData.side=sd;body.add(ag);ud.arms.push(ag)}
+   else if(p.t==='eye'){const re=.14+r*.13;const eg=new THREE.Group();eg.position.copy(C.clone().addScaledVector(dir,r*.82));eg.add(M3(GEO.sph,white,V(re,re,re)));const look=dir.clone().add(V(1.1,.05,0)).normalize();eg.add(M3(GEO.sph,black,V(re*.58,re*.58,re*.58),look.clone().multiplyScalar(re*.55)));eg.add(M3(GEO.sphLo,white,V(re*.2,re*.2,re*.2),look.clone().multiplyScalar(re*.9).add(V(0,re*.32,0))));body.add(eg)}
+   else if(def.mouth){const mg=new THREE.Group();mg.position.copy(C.clone().addScaledVector(dir,r*.96));mg.rotation.z=a;
+    if(p.t==='mouthH'||p.t==='mouthO'){const sm=new THREE.Mesh(new THREE.TorusGeometry(r*.28,.03+r*.02,8,18,Math.PI),dark);sm.rotation.set(0,Math.PI/2,Math.PI);mg.add(sm)}
+    if(p.t==='mouthC'){const jw=M3(GEO.sph,dark,V(r*.12,r*.2,r*.36));mg.add(jw);for(let k=-2;k<=2;k++){const tt=M3(GEO.cone,white,V(.045,.11,.045),V(.03,r*.14,k*r*.13));tt.rotation.x=Math.PI;mg.add(tt);if(k%2===0){const tb=M3(GEO.cone,white,V(.04,.09,.04),V(.03,-r*.15,k*r*.12+.03));mg.add(tb)}}}
+    if(p.t==='mouthO'){for(const k of[-1,1]){const tt=M3(GEO.cone,white,V(.04,.1,.04),V(.02,-r*.03,k*r*.12));tt.rotation.x=Math.PI;mg.add(tt)}}
+    for(const k of[-1,1]){const ck=M3(GEO.sphLo,pink,V(.04,r*.12,r*.16),C.clone().addScaledVector(V(.55,.05,k*.83).normalize(),r*.97).sub(mg.position));mg.add(ck)}
+    body.add(mg)}
+   else if(p.t==='spike'){const len=(.35+r*.35)*K,w=(.1+r*.09)*Math.sqrt(K);const s=M3(GEO.cone,bone,V(w,len,w));s.position.copy(C.clone().addScaledVector(dir,r*.85+len*.4));s.quaternion.setFromUnitVectors(_Y,dir);body.add(s)}
+   else if(p.t==='wing'){const wg=new THREE.Group();wg.position.copy(S);const wm=new THREE.MeshStandardMaterial({color:c2.clone().lerp(c1,.3),transparent:true,opacity:.82,side:THREE.DoubleSide,roughness:.4});ud.mats.push(wm);const sz=(.8+r*.6)*K;const m=M3(GEO.sph,wm,V(sz*.9,.05,sz*.55),V(-sz*.25,0,sd*sz*.75));m.rotation.y=sd*.25;wg.add(m);const ed=M3(new THREE.CapsuleGeometry(.05,sz*1.2,4,6),limbMat,null,V(0,.02,sd*sz*.65));ed.rotation.x=Math.PI/2;wg.add(ed);wg.userData.side=sd;body.add(wg);ud.wings.push(wg)}
+   else if(p.t==='horn'){const len=(.6+r*.7)*K,w=(.13+r*.1)*Math.sqrt(K);const hd=dir.clone().add(V(.7,.45,0)).normalize();const h=M3(GEO.cone,bone,V(w,len,w));h.position.copy(C.clone().addScaledVector(dir,r*.85).addScaledVector(hd,len*.42));h.quaternion.setFromUnitVectors(_Y,hd);body.add(h);const h2=M3(GEO.cone,bone,V(w*.7,len*.6,w*.7));h2.position.copy(h.position).addScaledVector(hd,len*.35).add(V(-.05,.1*K,0));h2.quaternion.setFromUnitVectors(_Y,hd.clone().add(V(-.4,.6,0)).normalize());body.add(h2)}
+   else if(p.t==='claw'){const th=(.08+r*.07)*Math.sqrt(K),len=(.5+r*.3)*K;const cm=new THREE.MeshStandardMaterial({color:new THREE.Color(d.color2).lerp(new THREE.Color('#ff5a3a'),.6),roughness:.35});ud.mats.push(cm);const ag=new THREE.Group();ag.position.copy(S);const inner=new THREE.Group();inner.rotation.x=sd*.9;ag.add(inner);inner.add(M3(new THREE.CapsuleGeometry(th,len,5,8),limbMat,null,V(0,-len/2,0)));const pg=new THREE.Group();pg.position.set(.1,-len-th,0);inner.add(pg);const up=M3(GEO.sph,cm,V(th*3.2*K,th*1.3*K,th*1.6*K),V(th*2.2*K,th*.9*K,0));up.rotation.z=.35;pg.add(up);const lo=M3(GEO.sph,cm,V(th*2.6*K,th*1*K,th*1.4*K),V(th*2*K,-th*.9*K,0));lo.rotation.z=-.35;pg.add(lo);pg.add(M3(GEO.sph,cm,V(th*1.8*K,th*1.8*K,th*1.8*K)));ag.userData.ph=sd>0?Math.PI:0;ag.userData.side=sd;body.add(ag);ud.arms.push(ag)}
+   else if(p.t==='shell'){const i0=clamp(p.s,0,n-1),a0=sp[Math.max(0,i0-1)],a1=sp[Math.min(n-1,i0+1)];const span=Math.abs(a0.x-a1.x)/2+r*.6;const sm=new THREE.MeshStandardMaterial({color:new THREE.Color('#8a6a3a').lerp(new THREE.Color(d.color2),.25),roughness:.6,flatShading:true});ud.mats.push(sm);const sh=new THREE.Mesh(new THREE.SphereGeometry(1,9,5,0,Math.PI*2,0,Math.PI/2),sm);const k=1.04+.14*K;sh.scale.set(span*k,r*1.1*k,r*1.08*k);sh.position.set(seg.x,seg.y-r*.08,0);sh.castShadow=true;body.add(sh);const rim=new THREE.Mesh(new THREE.TorusGeometry(1,.06,6,20),sm);rim.rotation.x=Math.PI/2;rim.scale.set(span*k,r*1.08*k,1);rim.position.copy(sh.position);body.add(rim)}
+   else if(p.t==='glow'){const gm=new THREE.MeshStandardMaterial({color:0xcfffff,emissive:new THREE.Color(d.color2).lerp(new THREE.Color('#4ff0ff'),.6),emissiveIntensity:1.3*K});for(let i=0;i<n;i++){const s2=sp[i];for(const z of[-1,1]){const dd=V(Math.cos(1.2+i*.3)*.5,.75,z*.42).normalize();const gs=M3(GEO.sphLo,gm,V(1,1,1).multiplyScalar((.06+s2.r*.09)*Math.sqrt(K)));gs.position.copy(V(s2.x,s2.y,0).addScaledVector(dd,s2.r*.97));body.add(gs)}}}
+   else if(p.t==='stinger'){const len=(.5+r*.5)*K;const pm=new THREE.MeshStandardMaterial({color:0x7a3fc0,roughness:.4});ud.mats.push(pm);const st=M3(GEO.cone,pm,V(.13*Math.sqrt(K),len,.13*Math.sqrt(K)));const sdir=V(Math.cos(a),Math.sin(a),0).normalize();st.position.copy(C.clone().addScaledVector(sdir,r*.8+len*.4));st.quaternion.setFromUnitVectors(_Y,sdir);body.add(st);const drop=M3(GEO.sphLo,new THREE.MeshStandardMaterial({color:0xb6ff4a,emissive:0x6aff2a,emissiveIntensity:.8}),V(.08,.08,.08).multiplyScalar(Math.sqrt(K)));drop.position.copy(C.clone().addScaledVector(sdir,r*.8+len*.95));body.add(drop)}
+   else if(p.t==='leaf'){const lm=new THREE.MeshStandardMaterial({color:0x4fbf4a,roughness:.6,side:THREE.DoubleSide});ud.mats.push(lm);for(const si of[clamp(p.s,0,n-1),Math.floor(n/2)]){const s2=sp[si];const top=V(s2.x,s2.y+s2.r*.92,0);for(const z of[-1,1]){const lg=new THREE.Group();lg.position.copy(top);lg.rotation.set(z*.7,0,.3);const L=(.35+s2.r*.5)*K;const lf=M3(GEO.sph,lm,V(L*.32,L,.03));lf.position.y=L*.85;lg.add(lf);body.add(lg);ud.ants.push(lg)}if(si===Math.floor(n/2)&&si===clamp(p.s,0,n-1))break}}
+   else if(p.t==='antenna'){const ag=new THREE.Group();ag.position.copy(C.clone().addScaledVector(dir,r*.9));ag.quaternion.setFromUnitVectors(_Y,dir);const len=.5+r*.35;ag.add(M3(GEO.cyl,limbMat,V(.03,len,.03),V(0,len/2,0)));const bm=new THREE.MeshStandardMaterial({color:c2,emissive:c2,emissiveIntensity:.5});ag.add(M3(GEO.sph,bm,V(.09,.09,.09),V(0,len,0)));body.add(ag);ud.ants.push(ag)}
+  }}
+ g.traverse(m=>{if(m.isMesh)m.castShadow=true});
+ ud.len=sp[0].x+sp[0].r-(sp[n-1].x-sp[n-1].r);ud.height=lift+(Math.max(...sp.map(p=>p.y+p.r))-minY);
+ return g}
+function animCreature(g,dt,move){const u=g.userData;u.t+=dt;const t=u.t;const ws=8+move*4;
+ for(const l of u.legs)l.rotation.z=Math.sin(t*ws+l.userData.ph)*.6*move;
+ for(const a of u.arms)a.rotation.z=Math.sin(t*ws+a.userData.ph)*.5*move+Math.sin(t*2+a.userData.ph)*.12;
+ let flap=move>.2||u.air?Math.sin(t*16)*.55:Math.sin(t*2.5)*.12;
+ let by=Math.abs(Math.sin(t*ws))*.07*move+Math.sin(t*2.2)*.025,ry=Math.sin(t*ws*.5)*.06*move,rz=0,sc=1;
+ if(u.act){u.actT+=dt;const k=u.actT;
+  if(u.act==='sing'){by+=Math.abs(Math.sin(k*10))*.12;rz=Math.sin(k*6)*.15;flap=Math.sin(k*12)*.4}
+  else if(u.act==='dance'){ry+=k*12;by+=Math.abs(Math.sin(k*12))*.25;for(const l of u.legs)l.rotation.z=Math.sin(k*20+l.userData.ph)*.7;flap=Math.sin(k*20)*.7}
+  else if(u.act==='pose'){by+=Math.sin(Math.min(1,k*2.5)*Math.PI)*.8;sc=1+Math.sin(Math.min(1,k*2)*Math.PI)*.15;rz=.25*Math.sin(Math.min(1,k*2)*Math.PI);flap=.6}
+  else if(u.act==='bite'){rz=-Math.sin(Math.min(1,k*4)*Math.PI)*.35;u.body.position.x=Math.sin(Math.min(1,k*4)*Math.PI)*.4}
+  else if(u.act==='hurt'){rz=Math.sin(k*30)*.12}
+  else if(u.act==='happy'){by+=Math.abs(Math.sin(k*9))*.3}
+  if(u.actT>(u.act==='dance'?1.1:u.act==='bite'?.3:u.act==='hurt'?.35:.9)){u.act=null;u.body.position.x=0}}
+ for(const w of u.wings)w.rotation.x=-w.userData.side*(flap+.15);
+ for(const a of u.ants)a.rotation.z=Math.sin(t*3+a.position.z)*.12;
+ u.body.position.y=u.shift+by;u.body.rotation.set(0,ry,rz);u.body.scale.setScalar(sc)}
+function doAct(g,a){g.userData.act=a;g.userData.actT=0}
+function flash(g,col=0xff2222){for(const m of g.userData.mats){if(m.emissive){m.emissive.setHex(col);m.emissiveIntensity=.6}}clearTimeout(g.userData.ft);g.userData.ft=setTimeout(()=>{for(const m of g.userData.mats)if(m.emissive){m.emissive.setHex(0);m.emissiveIntensity=1}},150)}
+// ---------- CELL STAGE ----------
+const c2=$('c2d'),ctx=c2.getContext('2d');
+const CPART={flag:{n:'鞭毛',ic:'〰️',d:'游得更快',cost:10},spike:{n:'尖刺',ic:'🔺',d:'用前面的刺戳傷別的細胞',cost:15},jaw:{n:'利牙口',ic:'🦷',d:'可以咬、吃肉塊',cost:15},filter:{n:'濾食口',ic:'🌿',d:'可以吃綠色藻類',cost:15},eye:{n:'眼點',ic:'👁️',d:'看得更遠、更可愛',cost:8}};
+const CL={R:1300,foods:[],npcs:[],picks:[],fx:[],bg:[],p:null,cam:{x:0,y:0,z:1.5},mx:0,my:0,mdown:false,t:0,dead:0};
+function cellR(){return 14+S.growth*.3}
+function cellDiet(){const j=S.cellOn.jaw,f=S.cellOn.filter;return j&&f?'omni':j?'carn':'herb'}
+function cellInit(){
+ const p=CL.p={x:0,y:0,vx:0,vy:0,r:cellR(),hp:100,ang:0,inv:0,cd:0};
+ CL.foods=[];CL.npcs=[];CL.picks=[];CL.fx=[];CL.bg=[];
+ for(let i=0;i<420;i++)spawnFood();for(let i=0;i<25;i++)spawnFood(undefined,rnd(-250,250),rnd(-250,250));for(let i=0;i<30;i++)spawnNpc(true);
+ const left=Object.keys(CPART).filter(k=>!S.cellUnl[k]);for(let i=0;i<Math.min(4,left.length+1);i++)spawnPick();
+ for(let i=0;i<14;i++)CL.bg.push({x:rnd(-1500,1500),y:rnd(-1500,1500),r:rnd(60,200),h:rnd(160,220),ph:rnd(0,6),d:rnd(.15,.45)});
+ c2.classList.remove('hide');$('c3d').classList.add('hide');
+ setMusic('cell');curProgress=()=>S.growth;renderCellPanel();
+ CL.clouds=[];cellActions();
+ $('bars').classList.remove('hide');
+}
+function randPos(minD=0){for(let k=0;k<30;k++){const a=Math.random()*6.283,d=Math.sqrt(Math.random())*CL.R*.95,x=Math.cos(a)*d,y=Math.sin(a)*d;if(!CL.p||Math.hypot(x-CL.p.x,y-CL.p.y)>minD)return{x,y}}return{x:0,y:0}}
+function spawnFood(type,x,y,sp){const pos=x===undefined?randPos(200):{x,y};let t=type;if(!t){const q=Math.random();t=q<.5?'plant':q<.62?'photo':q<.72?'seed':q<.82?'bubble':'meat'}CL.foods.push({x:pos.x,y:pos.y,type:t,sp,r:t==='orb'?7:rnd(4,7)+(t==='seed'?1:0),ph:rnd(0,6),vx:rnd(-6,6),vy:rnd(-6,6)})}
+const CKINDS=['grazer','grazer','hunter','hunter','spiky','shock','swift','swift','shell','poison','eye'];
+function spawnNpc(init){const pr=CL.p.r,kind=CKINDS[Math.floor(Math.random()*CKINDS.length)];const pos=randPos(init?260:600);
+ const r=pr*(kind==='grazer'||kind==='eye'?rnd(.4,1.2):kind==='hunter'?rnd(.75,1.7):kind==='swift'?rnd(.4,1):rnd(.55,1.45));
+ const hue=CSRC[kind].hue+rnd(-8,8),hp=r*2.2*(kind==='shell'?2.5:1);
+ CL.npcs.push({x:pos.x,y:pos.y,vx:0,vy:0,r,kind,hp,max:hp,hue,ang:rnd(0,6),ph:rnd(0,6),tx:pos.x,ty:pos.y,tt:0,cd:rnd(0,2),pz:0})}
+function cellLook(lv){return{spikes:lv.spike||0,glow:lv.shock||0,flags:lv.swift||0,shell:lv.shell||0,tent:lv.poison||0,eyes:lv.eye||0,jawLv:lv.bite||0,chloro:lv.regen||0}}
+const vis01=v=>clamp((v-.06)/.5,0,1);
+function spawnPick(x,y){const left=Object.keys(CPART).filter(k=>!S.cellUnl[k]&&!CL.picks.some(p=>p.part===k));if(!left.length)return;const pos=x===undefined?randPos(400):{x,y};CL.picks.push({x:pos.x,y:pos.y,part:left[Math.floor(Math.random()*left.length)],ph:0})}
+function renderCellPanel(){const L=$('cpList');L.innerHTML='';for(const k in CPART){const c=CPART[k],u=S.cellUnl[k],on=S.cellOn[k];const d=document.createElement('div');d.className='cp';d.innerHTML=`<em>${c.ic}</em><div><b>${c.n}</b><small>${c.d}</small></div>`;const b=document.createElement('button');
+ if(on){b.textContent='已裝上';b.disabled=true}else if(!u){b.textContent='🔒 未解鎖';b.disabled=true}else{b.textContent=`裝上 ${c.cost}🧬`;b.disabled=S.dna<c.cost;b.onclick=()=>{if(S.dna<c.cost)return;addDNA(-c.cost);S.cellOn[k]=1;sfx.unlock();toast(`裝上了${c.n}！`);renderCellPanel();save()}}
+ d.appendChild(b);L.appendChild(d)}}
+function cellPointer(e){CL.mx=e.clientX;CL.my=e.clientY}
+function cellUpdate(dt){const p=CL.p;CL.t+=dt;p.r=lerp(p.r,cellR(),dt*2);
+ const lv=traitPcts('cell'),L=k=>lv[k]||0,T=k=>tierOf(L(k));
+ let ax=0,ay=0;const k=KEYS;if(k.KeyW||k.ArrowUp)ay-=1;if(k.KeyS||k.ArrowDown)ay+=1;if(k.KeyA||k.ArrowLeft)ax-=1;if(k.KeyD||k.ArrowRight)ax+=1;
+ if(!ax&&!ay&&CL.mInside){const dx=CL.mx-innerWidth/2,dy=CL.my-innerHeight/2,dd=Math.hypot(dx,dy);if(dd>p.r*CL.cam.z*.6){const s=Math.min(1,dd/220);ax=dx/dd*s;ay=dy/dd*s}}
+ const spd=(S.cellOn.flag?190:125)*(1+p.r/120)*(1+L('swift')*1.3);p.vx=lerp(p.vx,ax*spd,dt*3);p.vy=lerp(p.vy,ay*spd,dt*3);
+ if(Math.hypot(p.vx,p.vy)>8)p.ang=Math.atan2(p.vy,p.vx);
+ p.x+=p.vx*dt;p.y+=p.vy*dt;const pd=Math.hypot(p.x,p.y);if(pd>CL.R-p.r){p.x*=(CL.R-p.r)/pd;p.y*=(CL.R-p.r)/pd}
+ p.inv-=dt;p.cd-=dt;p.qcd=(p.qcd||0)-dt;p.hp=Math.min(100,p.hp+dt*4*(1+L('regen')*4));
+ const diet=cellDiet();
+ // poison trail
+ CL.clouds=CL.clouds||[];if(T('poison')>=2){p.pz=(p.pz||0)-dt;if(p.pz<=0&&Math.hypot(p.vx,p.vy)>20){p.pz=.35;CL.clouds.push({x:p.x-Math.cos(p.ang)*p.r,y:p.y-Math.sin(p.ang)*p.r,r:p.r*.7,life:3,own:'p'})}}
+ for(let i=CL.clouds.length-1;i>=0;i--){const c=CL.clouds[i];c.life-=dt;c.r+=dt*4;if(c.life<=0){CL.clouds.splice(i,1);continue}
+  if(c.own==='n'){if(Math.hypot(c.x-p.x,c.y-p.y)<c.r+p.r*.5)hurtCell(dt*9,true)}else for(const n of CL.npcs)if(n.kind!=='poison'&&Math.hypot(c.x-n.x,c.y-n.y)<c.r+n.r*.5)n.hp-=dt*(T('poison')>=3?30:15)}
+ // foods
+ for(let i=CL.foods.length-1;i>=0;i--){const f=CL.foods[i];f.x+=f.vx*dt;f.y+=f.vy*dt;f.ph+=dt;
+  const d=Math.hypot(f.x-p.x,f.y-p.y);if(d<p.r+f.r){const plant=f.type!=='meat'&&f.type!=='orb';const ok=f.type==='orb'||(plant?(diet!=='carn'):(diet!=='herb'));if(ok){CL.foods.splice(i,1);eatCell(f);continue}}
+  if(d>2600){CL.foods.splice(i,1)}}
+ while(CL.foods.length<420)spawnFood();
+ // picks
+ for(let i=CL.picks.length-1;i>=0;i--){const q=CL.picks[i];q.ph+=dt;if(Math.hypot(q.x-p.x,q.y-p.y)<p.r+14){CL.picks.splice(i,1);S.cellUnl[q.part]=1;sfx.unlock();toast(`✨ 找到零件化石：解鎖「${CPART[q.part].n}」！打開「細胞改造」裝上它`,3500);addDNA(5);fxText(q.x,q.y,'+5🧬','#7ff7ff');renderCellPanel();$('cellpanel').classList.remove('hide');save()}}
+ // npcs
+ for(let i=CL.npcs.length-1;i>=0;i--){const n=CL.npcs[i];n.ph+=dt;n.cd-=dt;const dx=p.x-n.x,dy=p.y-n.y,d=Math.hypot(dx,dy)||1;let tx=0,ty=0,sp=60;
+  const bigger=n.r>p.r*.95,K=n.kind;
+  if(K==='hunter'&&bigger&&d<520){tx=dx/d;ty=dy/d;sp=105+n.r*.6}
+  else if(K==='swift'&&d<380){tx=-dx/d;ty=-dy/d;sp=210}
+  else if(K==='eye'&&d<420&&!bigger){tx=-dx/d;ty=-dy/d;sp=110}
+  else if((K==='grazer'||K==='hunter')&&!bigger&&d<300&&diet!=='herb'){tx=-dx/d;ty=-dy/d;sp=95}
+  else if(K==='grazer'&&d<200&&p.r>n.r*1.1){tx=-dx/d;ty=-dy/d;sp=80}
+  else{n.tt-=dt;if(n.tt<=0){n.tt=rnd(2,5);const a=rnd(0,6.28);n.tx=n.x+Math.cos(a)*200;n.ty=n.y+Math.sin(a)*200}const ex=n.tx-n.x,ey=n.ty-n.y,ed=Math.hypot(ex,ey)||1;tx=ex/ed;ty=ey/ed;sp=K==='spiky'||K==='shell'?28:K==='poison'?35:K==='swift'?120:45;
+   if(K==='grazer'){for(const f of CL.foods){if(f.type==='plant'&&Math.abs(f.x-n.x)<n.r+f.r&&Math.abs(f.y-n.y)<n.r+f.r){f.x=1e6;break}}}}
+  n.vx=lerp(n.vx,tx*sp,dt*2);n.vy=lerp(n.vy,ty*sp,dt*2);n.x+=n.vx*dt;n.y+=n.vy*dt;if(Math.hypot(n.vx,n.vy)>5)n.ang=Math.atan2(n.vy,n.vx);
+  const nd=Math.hypot(n.x,n.y);if(nd>CL.R-n.r){n.x*=(CL.R-n.r)/nd;n.y*=(CL.R-n.r)/nd;n.tt=0}
+  // species abilities
+  if(K==='shock'&&d<n.r*3+p.r&&n.cd<=0){n.cd=3;CL.fx.push({x:n.x,y:n.y,ring:n.r*3,life:.4,c:'#ffe04a'});sfx.bite();if(p.inv<=0)hurtCell(9)}
+  if(K==='poison'){n.pz-=dt;if(n.pz<=0){n.pz=.7;CL.clouds.push({x:n.x,y:n.y,r:n.r*.6,life:2.5,own:'n'})}}
+  // contact
+  if(d<p.r+n.r){
+   if(n.r<p.r*.55&&K!=='spiky'){CL.npcs.splice(i,1);sfx.eat();fxBurst(n.x,n.y,`hsl(${n.hue},70%,65%)`,10);gainDNA('cell',K,5);S.growth=Math.min(100,S.growth+2);addDNA(2);fxText(n.x,n.y,`${CSRC[K].ic}+5`,CSRC[K].col);continue}
+   const ov=(p.r+n.r-d)/2;p.x+=dx/d*ov;p.y+=dy/d*ov;n.x-=dx/d*ov;n.y-=dy/d*ov;
+   const front=Math.abs(angDiff(Math.atan2(-dy,-dx),p.ang))<1.0;
+   if(p.cd<=0&&front){let dmg=0;if(S.cellOn.spike)dmg+=18;if((S.cellOn.jaw&&n.r<p.r*1.25)||T('bite')>=2)dmg+=T('bite')>=3?34:22;if(dmg){n.hp-=dmg*(p.r/n.r)**.5*(K==='shell'?.5:1);p.cd=.45;sfx.bite();fxBurst(n.x,n.y,'#fff',6);n.vx-=dx/d*120;n.vy-=dy/d*120}}
+   if(T('spike')>=2)n.hp-=dt*(T('spike')>=3?45:22);
+   if(p.inv<=0){if(K==='hunter'&&bigger&&n.cd<=0){hurtCell(14);n.cd=.9}else if(K==='spiky'||K==='poison'){hurtCell(7);p.vx+=dx/d*220;p.vy+=dy/d*220}}}
+  if(n.hp<=0){CL.npcs.splice(i,1);sfx.pop();fxBurst(n.x,n.y,`hsl(${n.hue},70%,60%)`,16);const m=Math.ceil(n.r/9);for(let j=0;j<m;j++)spawnFood('meat',n.x+rnd(-n.r,n.r),n.y+rnd(-n.r,n.r),K);for(let j=0;j<2;j++)spawnFood('orb',n.x+rnd(-n.r,n.r)*.5,n.y+rnd(-n.r,n.r)*.5,K);if(Math.random()<.25)spawnPick(n.x,n.y);addDNA(3);fxText(n.x,n.y,'+3🧬','#7ff7ff');continue}
+  if(d>2400||n.r<p.r*.22){CL.npcs.splice(i,1)}}
+ while(CL.npcs.length<30)spawnNpc(false);
+ for(let i=CL.fx.length-1;i>=0;i--){const f=CL.fx[i];f.life-=dt;f.x+=(f.vx||0)*dt;f.y+=(f.vy||0)*dt;if(f.life<=0)CL.fx.splice(i,1)}
+ const zt=clamp(2.5*Math.pow(16/p.r,.55),.7,2.6)*(S.cellOn.eye?.85:1)*(1-L('eye')*.5)*Math.min(innerWidth,innerHeight)/800;
+ CL.cam.z=lerp(CL.cam.z,zt,dt*1.5);CL.cam.x=lerp(CL.cam.x,p.x,dt*5);CL.cam.y=lerp(CL.cam.y,p.y,dt*5);
+ CL.hudT=(CL.hudT||0)-dt;if(CL.hudT<=0){CL.hudT=.2;setBars(bar('❤️ 生命',p.hp,100,'linear-gradient(90deg,#ff5e7e,#ff9e9e)')+bar('🌱 成長',S.growth,100,'linear-gradient(90deg,#3fd18b,#9df07a)')+`<div id="statbox">食性：${{herb:'🌿 草食',carn:'🥩 肉食',omni:'😋 雜食'}[diet]}${T('shock')>=2?` · ⚡Q 電擊${p.qcd>0?' ⏳':' ✅'}`:''}</div>`+dnaPanel('cell'))}
+ if(S.growth>=100&&!CL.done){CL.done=true;S.done.cell=1;save();sfx.win();toast('🎉 你的細胞長出了大腦，準備好上岸了！',4000);cellActions()}
+ $('prompt').textContent=CL.t<8?'吃不同的細胞和藻類，就會變得越來越像牠們！':'';
+}
+function cellActions(){const a=[{t:'🧬 細胞改造',f:()=>{$('cellpanel').classList.toggle('hide');renderCellPanel()}}];if(tierOf(trLv('cell','shock'))>=2)a.push({t:'⚡ 電擊 Q',f:cellShock});if(CL.done)a.push({t:'🏝️ 上岸去！進入生物編輯器',cls:'big',f:()=>goStage('editor')});setActions(a)}
+function cellShock(){const p=CL.p,t=tierOf(trLv('cell','shock'));if(t<2||p.qcd>0)return;p.qcd=t>=3?2.5:4;const R=p.r*(t>=3?5:3.5);CL.fx.push({x:p.x,y:p.y,ring:R,life:.45,c:'#fff27a'});sfx.bite();tone(900,.3,{type:'square',v:.12,to:200,lp:3000});for(const n of CL.npcs)if(Math.hypot(n.x-p.x,n.y-p.y)<R+n.r){n.hp-=t>=3?50:30;fxBurst(n.x,n.y,'#fff27a',5)}}
+function angDiff(a,b){let d=a-b;while(d>Math.PI)d-=6.283;while(d<-Math.PI)d+=6.283;return d}
+function eatCell(f){const type=f.type;let g=1.3,dn=1;if(type==='meat'){g=2.6;dn=2;if(f.sp)gainDNA('cell',f.sp,2.5)}else if(type==='orb'){g=.5;dn=1;gainDNA('cell',f.sp,4);fxText(CL.p.x,CL.p.y-CL.p.r,`${CSRC[f.sp].ic}+4`,CSRC[f.sp].col)}else if(type!=='plant'){g=1.6;gainDNA('cell',type,2.5);if(Math.random()<.4)fxText(CL.p.x,CL.p.y-CL.p.r,`${CSRC[type].ic}+2.5`,CSRC[type].col)}
+ S.growth=Math.min(100,S.growth+g);addDNA(dn);sfx.eat();CL.p.hp=Math.min(100,CL.p.hp+4);if(Math.random()<.1)save()}
+function hurtCell(n,silent){const p=CL.p;n*=1-Math.min(.6,trLv('cell','shell')*1.1);p.hp-=n;if(!silent){p.inv=.6;sfx.hurt();fxBurst(p.x,p.y,'#ff7a8a',8)}if(p.hp<=0){toast('💥 你被吃掉了……重新出生！',3000);S.growth=Math.max(0,S.growth-8);const pos=randPos(0);p.x=pos.x;p.y=pos.y;p.hp=100;p.inv=2;save()}}
+function fxBurst(x,y,c,n){for(let i=0;i<n;i++){const a=rnd(0,6.28),s=rnd(40,160);CL.fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rnd(.3,.7),c,r:rnd(2,5)})}}
+function fxText(x,y,t,c){CL.fx.push({x,y,vx:0,vy:-40,life:1,c,text:t})}
+function drawBlob(x,y,r,ang,t,o){ctx.save();ctx.translate(x,y);
+ if(o.glow>0){const g=ctx.createRadialGradient(0,0,r*.5,0,0,r*(1.6+o.glow));g.addColorStop(0,`rgba(255,240,120,${.35*o.glow})`);g.addColorStop(1,'rgba(255,240,120,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,r*(1.6+o.glow),0,6.283);ctx.fill()}
+ ctx.rotate(ang);
+ const nf=(o.flag?1:0)+Math.round((o.flags||0)*3);if(nf){ctx.strokeStyle=o.edge;ctx.lineWidth=Math.max(2,r*.1);ctx.lineCap='round';for(let f=0;f<nf;f++){const off=(f-(nf-1)/2)*.35,len=1.5+(o.flags||0)*1.2;ctx.beginPath();for(let i=0;i<=14;i++){const u=i/14,px=-r*.9-u*r*len,py=off*r+Math.sin(t*16-u*7+f)*r*.3*u;i?ctx.lineTo(px,py):ctx.moveTo(px,py)}ctx.stroke()}}
+ if(o.tent>0){ctx.strokeStyle=`rgba(255,120,220,.8)`;ctx.lineWidth=Math.max(1.5,r*.07);const nt=3+Math.round(o.tent*4);for(let f=0;f<nt;f++){const a0=Math.PI+(f-(nt-1)/2)*.28;ctx.beginPath();for(let i=0;i<=10;i++){const u=i/10,rr=r*(.85+u*(.8+o.tent)),aa=a0+Math.sin(t*4-u*5+f)*.15;const px=Math.cos(aa)*rr,py=Math.sin(aa)*rr;i?ctx.lineTo(px,py):ctx.moveTo(px,py)}ctx.stroke()}}
+ if(o.spike){ctx.fillStyle='#fff3d6';for(const a of[-.45,0,.45]){ctx.save();ctx.rotate(a);ctx.beginPath();ctx.moveTo(r*.85,-r*.17);ctx.lineTo(r*1.55,0);ctx.lineTo(r*.85,r*.17);ctx.fill();ctx.restore()}}
+ if(o.spikes>0){ctx.fillStyle='#e9d4ff';const ns=6+Math.round(o.spikes*6),L=.25+o.spikes*.4;for(let i=0;i<ns;i++){ctx.save();ctx.rotate(i/ns*6.283+.2);ctx.beginPath();ctx.moveTo(r*.85,-r*.13);ctx.lineTo(r*(1+L),0);ctx.lineTo(r*.85,r*.13);ctx.fill();ctx.restore()}}
+ if(o.jaw||o.jawLv>0){const op=.35+Math.sin(t*8)*.25,js=1+(o.jawLv||0)*.6;ctx.fillStyle=o.edge;for(const s of[-1,1]){ctx.save();ctx.rotate(s*op);ctx.beginPath();ctx.moveTo(r*.7,0);ctx.quadraticCurveTo(r*1.35*js,s*r*.1,r*1.25*js,s*r*.42);ctx.quadraticCurveTo(r*1.05,s*r*.25,r*.7,s*r*.32);ctx.fill();ctx.restore()}}
+ const sx=1+(o.speed||0)*.12;ctx.beginPath();for(let i=0;i<=32;i++){const a=i/32*6.283,w=1+.05*Math.sin(a*3+t*3+o.ph)+.035*Math.sin(a*5-t*4);const px=Math.cos(a)*r*w*sx,py=Math.sin(a)*r*w/sx;i?ctx.lineTo(px,py):ctx.moveTo(px,py)}ctx.closePath();
+ const gr=ctx.createRadialGradient(-r*.3,-r*.3,r*.1,0,0,r*1.05);gr.addColorStop(0,o.inner);gr.addColorStop(.75,o.fill);gr.addColorStop(1,o.edge);ctx.fillStyle=gr;ctx.globalAlpha=o.alpha||.92;ctx.fill();ctx.globalAlpha=1;ctx.lineWidth=Math.max(1.5,r*.08);ctx.strokeStyle=o.edge;ctx.stroke();
+ if(o.shell>0){ctx.save();ctx.clip();ctx.strokeStyle='rgba(90,55,20,.75)';ctx.fillStyle=`rgba(200,146,90,${.25+o.shell*.45})`;const hs=r*.42;for(let gx=-2;gx<=2;gx++)for(let gy=-2;gy<=2;gy++){const cx=gx*hs*1.5,cy=gy*hs*1.73+(gx%2?hs*.86:0);if(Math.hypot(cx,cy)>r*(.3+o.shell*.9))continue;ctx.beginPath();for(let k=0;k<6;k++){const a=k/6*6.283;ctx.lineTo(cx+Math.cos(a)*hs*.85,cy+Math.sin(a)*hs*.85)}ctx.closePath();ctx.fill();ctx.lineWidth=Math.max(1,r*.05);ctx.stroke()}ctx.restore()}
+ if(o.chloro>0){ctx.fillStyle='rgba(60,220,80,.85)';const nc=3+Math.round(o.chloro*8);for(let i=0;i<nc;i++){const a=i*2.4+o.ph,d=r*(.25+((i*37)%10)/16);ctx.beginPath();ctx.ellipse(Math.cos(a)*d,Math.sin(a)*d,r*.11,r*.07,a,0,6.283);ctx.fill()}}
+ ctx.fillStyle='rgba(255,255,255,.25)';ctx.beginPath();ctx.arc(-r*.3,r*.15,r*.28,0,6.283);ctx.fill();ctx.fillStyle='rgba(0,0,0,.12)';for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(Math.cos(i*1.7+o.ph)*r*.45-r*.1,Math.sin(i*2.3+o.ph)*r*.45,r*.07,0,6.283);ctx.fill()}
+ if(o.filter){ctx.strokeStyle=o.edge;ctx.lineWidth=Math.max(1,r*.05);ctx.beginPath();ctx.arc(r*.95,0,r*.2,0,6.283);ctx.stroke();for(let i=0;i<5;i++){const a=(i-2)*.4;ctx.beginPath();ctx.moveTo(r*.95+Math.cos(a)*r*.2,Math.sin(a)*r*.2);ctx.lineTo(r*.95+Math.cos(a)*r*(.32+Math.sin(t*10+i)*.05),Math.sin(a)*r*.32);ctx.stroke()}}
+ if(o.glow>0){ctx.strokeStyle=`rgba(255,250,150,${.5+.5*Math.sin(t*12)})`;ctx.lineWidth=Math.max(1,r*.05);for(let i=0;i<Math.round(2+o.glow*3);i++){const a=t*3+i*2.1;ctx.beginPath();ctx.moveTo(Math.cos(a)*r*1.05,Math.sin(a)*r*1.05);ctx.lineTo(Math.cos(a+.15)*r*1.3,Math.sin(a+.15)*r*1.3);ctx.lineTo(Math.cos(a+.05)*r*1.45,Math.sin(a+.05)*r*1.45);ctx.stroke()}}
+ ctx.rotate(-ang);const es=o.bigEye?r*.3:r*.19,ex=Math.cos(ang)*r*.42,ey=Math.sin(ang)*r*.42;
+ const eyeAt=(px,py,es)=>{ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(px,py,es,es*1.15,0,0,6.283);ctx.fill();ctx.fillStyle='#14142a';ctx.beginPath();ctx.arc(px+Math.cos(ang)*es*.3,py+Math.sin(ang)*es*.3,es*.55,0,6.283);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px+Math.cos(ang)*es*.3-es*.18,py+Math.sin(ang)*es*.3-es*.22,es*.2,0,6.283);ctx.fill()};
+ if(o.eyes>0){const ne=Math.round(1+o.eyes*4);for(let i=0;i<ne;i++){const a=ang+Math.PI+(i-(ne-1)/2)*.7;eyeAt(Math.cos(a)*r*.45,Math.sin(a)*r*.45-r*.05,r*.13)}}
+ for(const s of[-1,1]){const px=ex+Math.cos(ang+Math.PI/2)*s*r*.3,py=ey+Math.sin(ang+Math.PI/2)*s*r*.3-r*.08;eyeAt(px,py,es);
+  if(o.angry){ctx.strokeStyle='#14142a';ctx.lineWidth=Math.max(1.5,r*.07);ctx.beginPath();ctx.moveTo(px-es*s*1.1,py-es*1.5);ctx.lineTo(px+es*s*.6,py-es*.95);ctx.stroke()}}
+ ctx.restore()}
+function cellDraw(){const W=Math.round(innerWidth*devicePixelRatio),H=Math.round(innerHeight*devicePixelRatio);if(c2.width!==W||c2.height!==H){c2.width=W;c2.height=H}const dpr=devicePixelRatio;ctx.setTransform(dpr,0,0,dpr,0,0);const w=innerWidth,h=innerHeight,cam=CL.cam,t=CL.t;
+ const g=ctx.createRadialGradient(w/2,h*.35,50,w/2,h/2,Math.max(w,h)*.8);g.addColorStop(0,'#2a9db5');g.addColorStop(.6,'#126277');g.addColorStop(1,'#063447');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+ // background silhouettes (parallax)
+ for(const b of CL.bg){const x=w/2+(b.x-cam.x*b.d)*.5,y=h/2+(b.y-cam.y*b.d)*.5;ctx.fillStyle=`hsla(${b.h},50%,70%,.07)`;ctx.beginPath();ctx.ellipse(x+Math.sin(t*.3+b.ph)*20,y,b.r,b.r*.7,t*.05+b.ph,0,6.283);ctx.fill()}
+ // caustics
+ ctx.globalCompositeOperation='lighter';ctx.strokeStyle='rgba(180,255,255,.045)';ctx.lineWidth=18;for(let i=0;i<7;i++){ctx.beginPath();for(let x=0;x<=w;x+=40){const y=(i/7)*h+Math.sin(x*.01+t*.6+i)*30-((cam.y*.3)%(h/7));x?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke()}ctx.globalCompositeOperation='source-over';
+ // specks
+ ctx.fillStyle='rgba(220,255,255,.25)';for(let i=0;i<70;i++){const sx=((i*137.5-cam.x*.6)%w+w)%w,sy=((i*91.3-cam.y*.6+Math.sin(t+i)*6)%h+h)%h;ctx.fillRect(sx,sy,1.6,1.6)}
+ ctx.save();ctx.translate(w/2,h/2);ctx.scale(cam.z,cam.z);ctx.translate(-cam.x,-cam.y);
+ // pool edge
+ ctx.strokeStyle='rgba(10,40,50,.6)';ctx.lineWidth=80;ctx.beginPath();ctx.arc(0,0,CL.R+40,0,6.283);ctx.stroke();ctx.strokeStyle='rgba(160,240,220,.15)';ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,0,CL.R,0,6.283);ctx.stroke();
+ const vw=w/cam.z/2+60,vh=h/cam.z/2+60,vis=(x,y)=>Math.abs(x-cam.x)<vw&&Math.abs(y-cam.y)<vh;
+ for(const c of CL.clouds||[]){if(!vis(c.x,c.y))continue;ctx.fillStyle=c.own==='p'?`rgba(170,255,90,${.18*Math.min(1,c.life)})`:`rgba(255,110,220,${.2*Math.min(1,c.life)})`;ctx.beginPath();ctx.arc(c.x,c.y,c.r,0,6.283);ctx.fill()}
+ for(const f of CL.foods){if(!vis(f.x,f.y))continue;const T=f.type;
+  if(T==='plant'){ctx.fillStyle='#7ee26a';for(let k=0;k<3;k++){ctx.beginPath();ctx.arc(f.x+Math.cos(k*2.1+f.ph)*f.r*.6,f.y+Math.sin(k*2.1+f.ph)*f.r*.6,f.r*.62,0,6.283);ctx.fill()}ctx.fillStyle='#c8ff9a';ctx.beginPath();ctx.arc(f.x,f.y,f.r*.3,0,6.283);ctx.fill()}
+  else if(T==='photo'){ctx.fillStyle=`rgba(110,255,120,${.25+.15*Math.sin(f.ph*3)})`;ctx.beginPath();ctx.arc(f.x,f.y,f.r*2,0,6.283);ctx.fill();ctx.fillStyle='#5dff74';for(let k=0;k<5;k++){const a=k*1.256+f.ph*.5;ctx.beginPath();ctx.ellipse(f.x+Math.cos(a)*f.r*.6,f.y+Math.sin(a)*f.r*.6,f.r*.55,f.r*.25,a,0,6.283);ctx.fill()}ctx.fillStyle='#eaffb0';ctx.beginPath();ctx.arc(f.x,f.y,f.r*.3,0,6.283);ctx.fill()}
+  else if(T==='seed'){ctx.fillStyle='#a8743f';ctx.beginPath();ctx.ellipse(f.x,f.y,f.r*1.1,f.r*.75,f.ph*.3,0,6.283);ctx.fill();ctx.strokeStyle='#5a3a1a';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(f.x,f.y,f.r*.6,f.r*.4,f.ph*.3,0,6.283);ctx.stroke();ctx.beginPath();ctx.moveTo(f.x-f.r*1.05*Math.cos(f.ph*.3),f.y-f.r*1.05*Math.sin(f.ph*.3));ctx.lineTo(f.x+f.r*1.05*Math.cos(f.ph*.3),f.y+f.r*1.05*Math.sin(f.ph*.3));ctx.stroke()}
+  else if(T==='bubble'){for(let k=0;k<4;k++){const bx=f.x+Math.cos(k*1.6+f.ph)*f.r*.7,by=f.y+Math.sin(k*1.6+f.ph)*f.r*.7-Math.sin(f.ph*2+k)*2,br=f.r*(.4+k*.1);ctx.fillStyle='rgba(170,235,255,.45)';ctx.beginPath();ctx.arc(bx,by,br,0,6.283);ctx.fill();ctx.strokeStyle='rgba(230,255,255,.9)';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(bx-br*.35,by-br*.35,br*.22,0,6.283);ctx.fill()}}
+  else if(T==='orb'){const c=CSRC[f.sp]?.col||'#7ff7ff',s=1+Math.sin(f.ph*5)*.2;ctx.fillStyle=c;ctx.globalAlpha=.3;ctx.beginPath();ctx.arc(f.x,f.y,f.r*1.8*s,0,6.283);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=c;ctx.lineWidth=2;ctx.beginPath();for(let i=0;i<=12;i++){const u=i/12;ctx.lineTo(f.x-f.r+u*f.r*2,f.y+Math.sin(u*6.28+f.ph*4)*f.r*.6)}ctx.stroke();ctx.beginPath();for(let i=0;i<=12;i++){const u=i/12;ctx.lineTo(f.x-f.r+u*f.r*2,f.y-Math.sin(u*6.28+f.ph*4)*f.r*.6)}ctx.stroke()}
+  else{ctx.fillStyle='#e0525e';ctx.beginPath();ctx.ellipse(f.x,f.y,f.r*1.1,f.r*.8,f.ph,0,6.283);ctx.fill();ctx.fillStyle='#ffd1c4';ctx.beginPath();ctx.ellipse(f.x-f.r*.2,f.y-f.r*.2,f.r*.35,f.r*.2,f.ph,0,6.283);ctx.fill()}}
+ for(const q of CL.picks){if(!vis(q.x,q.y))continue;const s=1+Math.sin(q.ph*4)*.15;ctx.fillStyle='rgba(255,230,120,.25)';ctx.beginPath();ctx.arc(q.x,q.y,22*s,0,6.283);ctx.fill();ctx.font='22px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(CPART[q.part].ic,q.x,q.y);ctx.strokeStyle='#ffe27a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(q.x,q.y,16*s,0,6.283);ctx.stroke()}
+ for(const n of CL.npcs){if(!vis(n.x,n.y))continue;const K=n.kind,L=K==='hunter'?55:K==='shock'?66:62;const lk=cellLook({[CSRC[K].tr]:K==='grazer'?.3:.85});drawBlob(n.x,n.y,n.r,n.ang,t,Object.assign(lk,{ph:n.ph,fill:`hsl(${n.hue},65%,${L}%)`,inner:`hsl(${n.hue},70%,84%)`,edge:`hsl(${n.hue},60%,32%)`,jaw:K==='hunter',flag:K!=='spiky'&&K!=='shell'&&K!=='poison',filter:K==='grazer',angry:K==='hunter'&&n.r>CL.p.r*.95,speed:Math.hypot(n.vx,n.vy)/100,alpha:K==='poison'?.7:.92,bigEye:K==='eye'}));if(n.hp<n.max){ctx.fillStyle='#0008';ctx.fillRect(n.x-n.r,n.y-n.r-10,n.r*2,4);ctx.fillStyle='#ff6b7d';ctx.fillRect(n.x-n.r,n.y-n.r-10,n.r*2*n.hp/n.max,4)}if(n.r<CL.p.r*.55&&K!=='spiky'){ctx.strokeStyle='rgba(255,255,255,.5)';ctx.setLineDash([4,4]);ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(n.x,n.y,n.r+5,0,6.283);ctx.stroke();ctx.setLineDash([])}}
+ const p=CL.p;if(!(p.inv>0&&Math.floor(t*20)%2)){const pc=dnaPcts('cell'),tl=traitPcts('cell'),lk={};for(const k in tl)lk[k]=vis01(tl[k]);const col=new THREE.Color('#4fc3ff');Object.keys(pc).filter(k=>k!=='self').sort((a,b)=>pc[a]-pc[b]).forEach(k=>col.lerp(new THREE.Color(CSRC[k].col),Math.min(.8,pc[k]*1.2)));const hsl={};col.getHSL(hsl);const H=hsl.h*360,Sa=hsl.s*100;
+  drawBlob(p.x,p.y,p.r,p.ang,t,Object.assign(cellLook(lk),{ph:0,fill:`hsl(${H},${Sa}%,62%)`,inner:`hsl(${H},${Sa}%,86%)`,edge:`hsl(${H},${Sa}%,30%)`,flag:S.cellOn.flag,spike:S.cellOn.spike,jaw:S.cellOn.jaw,filter:S.cellOn.filter,bigEye:S.cellOn.eye,speed:Math.hypot(p.vx,p.vy)/150}))}
+ for(const f of CL.fx)if(f.ring){ctx.globalAlpha=clamp(f.life*2.5,0,1);ctx.strokeStyle=f.c;ctx.lineWidth=4;ctx.beginPath();ctx.arc(f.x,f.y,f.ring*(1-f.life),0,6.283);ctx.stroke();ctx.globalAlpha=1}
+ for(const f of CL.fx){if(f.ring)continue;ctx.globalAlpha=clamp(f.life*2,0,1);if(f.text){ctx.fillStyle=f.c;ctx.font=`bold ${16/cam.z+6}px sans-serif`;ctx.textAlign='center';ctx.fillText(f.text,f.x,f.y)}else{ctx.fillStyle=f.c;ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,6.283);ctx.fill()}}ctx.globalAlpha=1;
+ ctx.restore()}
+// ---------- RENDERER (shared) ----------
+const renderer=new THREE.WebGLRenderer({canvas:$('c3d'),antialias:true,preserveDrawingBuffer:!!TEST});
+renderer.setPixelRatio(Math.min(2,devicePixelRatio));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+let scene=null,camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,.1,600);
+function skyDome(top,bot){const g=new THREE.SphereGeometry(400,24,12);const c=[],pa=g.attributes.position,a=new THREE.Color(top),b=new THREE.Color(bot);for(let i=0;i<pa.count;i++){const t=clamp(pa.getY(i)/400*1.6+.2,0,1);const x=b.clone().lerp(a,t);c.push(x.r,x.g,x.b)}g.setAttribute('color',new THREE.Float32BufferAttribute(c,3));return new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide,fog:false}))}
+
+// ---------- EDITOR ----------
+const ED={tool:'move',place:null,sel:0,drag:null,dirty:true,mesh:null,rot:0,hover:null};
+const EDS=70,EOX=310,EOY=232;// px per unit, origin
+const e2p=(x,y)=>[EOX+x*EDS,EOY-y*EDS],p2e=(px,py)=>[(px-EOX)/EDS,(EOY-py)/EDS];
+function edInit(){
+ if(!S.creature)S.creature=defaultCreature(S.diet==='carn'?'carn':S.diet==='omni'?'omni':'herb');
+ if(S.diet==='omni')S.unlocked.mouthO=1;
+ if(S.cellOn&&S.cellOn.spike)S.unlocked.spike=1;dnaMap('creature');for(const tr in (S.tierK||{}))if(S.tierK[tr]>=2){const pk=Object.keys(PDEF).find(k=>PDEF[k].trait===tr);if(pk)S.unlocked[pk]=1}
+ scene=new THREE.Scene();scene.add(skyDome('#2c6f8f','#0b2533'));
+ scene.add(new THREE.HemisphereLight(0xdff6ff,0x334455,1.2));const dl=new THREE.DirectionalLight(0xffffff,2.2);dl.position.set(4,8,6);dl.castShadow=true;dl.shadow.mapSize.set(1024,1024);Object.assign(dl.shadow.camera,{left:-5,right:5,top:5,bottom:-5});scene.add(dl);
+ const ped=new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.7,.4,48),new THREE.MeshStandardMaterial({color:0x3fa58a,roughness:.7}));ped.position.y=-.2;ped.receiveShadow=true;scene.add(ped);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(3.45,.06,8,64),new THREE.MeshStandardMaterial({color:0xffe27a,emissive:0xffb733,emissiveIntensity:.6}));ring.rotation.x=Math.PI/2;scene.add(ring);
+ for(let i=0;i<40;i++){const b=new THREE.Mesh(GEO.sphLo,new THREE.MeshBasicMaterial({color:0x8fffe1,transparent:true,opacity:.25}));b.scale.setScalar(rnd(.03,.12));b.position.set(rnd(-12,12),rnd(0,8),rnd(-12,-2));b.userData.bub=rnd(.2,.6);scene.add(b)}
+ camera.fov=40;camera.position.set(0,3.4,12.5);camera.lookAt(0,1.3,0);
+ $('editor').classList.remove('hide');$('c3d').classList.remove('hide');c2.classList.add('hide');$('bars').classList.add('hide');
+ setActions([]);$('prompt').textContent='';setMusic('editor');curProgress=()=>50;
+ const c=S.creature;$('edName').value=c.name;$('edC1').value=c.color;$('edC2').value=c.color2;
+ ED.dirty=true;edPalette();edStats();edApplyView();edDraw();
+}
+function edApplyView(){const w=innerWidth,h=innerHeight;const panelB=$('edwrap').offsetHeight||300;camera.setViewOffset(w,h,0,panelB*.42,w,h);camera.aspect=w/h;camera.updateProjectionMatrix()}
+function edPalette(){const L=$('palList');L.innerHTML='';for(const k in PDEF){const d=PDEF[k],u=S.unlocked[k];if(d.trait&&!u)continue;const b=document.createElement('button');b.className='pb'+(ED.place===k?' sel':'')+(u?'':' lock');const st=Object.entries(d.st).map(([a,v])=>({spd:'速度',atk:'攻擊',soc:'社交'}[a]+'+'+v)).join(' ');b.innerHTML=`<em>${d.ic}</em><div><b>${d.n}</b>${u?'':` 🔒 ${d.cost}🧬`}<small>${st}${d.mir?' · 左右一對':''}</small></div>`;
+ b.onclick=()=>{initAudio();if(!S.unlocked[k]){if(S.dna>=d.cost){addDNA(-d.cost);S.unlocked[k]=1;sfx.unlock();toast(`解鎖了「${d.n}」！`);save()}else{sfx.bad();toast(`DNA 不夠，需要 ${d.cost}🧬`);return}}sfx.click();ED.place=ED.place===k?null:k;ED.tool=ED.place?'place':'move';edTools();edPalette()};L.appendChild(b)}}
+function edTools(){$('tMove').classList.toggle('sel',ED.tool==='move');$('tDel').classList.toggle('sel',ED.tool==='del')}
+function edStats(){const s=statsOf(S.creature),diet=dietOf(S.creature);const row=(n,v,c)=>`<div class="st"><b>${n}</b><span style="width:${Math.min(150,v*15)}px;background:${c}"></span> ${v}</div>`;$('edStats').innerHTML=`<div style="margin-top:8px;color:#8fffe1"><b>能力</b> · 食性：${diet?{herb:'🌿草食',carn:'🥩肉食',omni:'😋雜食'}[diet]:'❓沒有嘴'}</div>`+row('速度',s.spd,'#7ef0c4')+row('攻擊',s.atk,'#ff7a8a')+row('社交',s.soc,'#ffe27a')+`<div style="font-size:12px;color:#9cd">零件：${S.creature.parts.length}/16</div>`;$('edDna').innerHTML=dnaPanel('creature')+'<div style="font-size:11px;color:#9cd;margin-top:4px">吃下的生物和植物特徵會自動長在身上（右邊 3D 預覽），比例越高越明顯。DNA 到 30% 的特徵零件也會出現在左邊，可以手動多裝。</div>';document.querySelectorAll('#edright [data-p]').forEach(b=>b.classList.toggle('sel',b.dataset.p===S.creature.pattern))}
+function edPartPos(p){const s=S.creature.spine[clamp(p.s,0,S.creature.spine.length-1)];const a=p.t==='leg'?-1.57:p.a;const k=PDEF[p.t].mir?(p.t==='leg'?1.1:.95):1.05;return[s.x+Math.cos(a)*s.r*k,s.y+Math.sin(a)*s.r*k]}
+function edDraw(){const cv=$('edc'),g=cv.getContext('2d'),c=S.creature,sp=c.spine;g.clearRect(0,0,620,250);
+ g.strokeStyle='#ffffff10';g.lineWidth=1;for(let x=0;x<620;x+=35){g.beginPath();g.moveTo(x,0);g.lineTo(x,250);g.stroke()}for(let y=EOY;y>0;y-=35){g.beginPath();g.moveTo(0,y);g.lineTo(620,y);g.stroke()}
+ g.strokeStyle='#8fffe155';g.lineWidth=2;g.beginPath();g.moveTo(0,EOY);g.lineTo(620,EOY);g.stroke();g.fillStyle='#8fffe188';g.font='12px sans-serif';g.fillText('地面',6,EOY+14);g.fillText('頭 →',560,16);
+ // legs first
+ for(const p of c.parts)if(p.t==='leg'){const s=sp[p.s];const[x,y]=e2p(s.x,s.y-s.r*.8);g.strokeStyle=c.color;g.lineWidth=10;g.lineCap='round';g.beginPath();g.moveTo(x,y);g.lineTo(x,EOY-4);g.stroke();g.fillStyle=c.color2;g.beginPath();g.ellipse(x+5,EOY-4,10,5,0,0,6.283);g.fill()}
+ const curve=new THREE.CatmullRomCurve3(sp.map(p=>new THREE.Vector3(p.x,p.y,0)),false,'catmullrom',.5);const n=sp.length,M=n*10;
+ g.fillStyle=c.color;for(let i=0;i<=M;i++){const t=i/M,P=curve.getPoint(t),f=t*(n-1),i0=Math.min(n-2,Math.floor(f)),ft=f-i0,r=lerp(sp[i0].r,sp[i0+1].r,ft*ft*(3-2*ft));const[x,y]=e2p(P.x,P.y);g.beginPath();g.arc(x,y,r*EDS,0,6.283);g.fill()}
+ g.fillStyle=c.color2;g.globalAlpha=.5;for(let i=0;i<=M;i+=2){const t=i/M,P=curve.getPoint(t),f=t*(n-1),i0=Math.min(n-2,Math.floor(f)),r=lerp(sp[i0].r,sp[i0+1].r,f-i0);const[x,y]=e2p(P.x,P.y-r*.55);g.beginPath();g.arc(x,y,r*EDS*.42,0,6.283);g.fill()}g.globalAlpha=1;
+ g.strokeStyle='#fff8';g.lineWidth=2;g.beginPath();sp.forEach((p,i)=>{const[x,y]=e2p(p.x,p.y);i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke();
+ sp.forEach((p,i)=>{const[x,y]=e2p(p.x,p.y);g.fillStyle=i===ED.sel?'#ffe27a':'#fff';g.beginPath();g.arc(x,y,i===0?9:7,0,6.283);g.fill();g.strokeStyle='#123';g.lineWidth=2;g.stroke()});
+ g.font='22px sans-serif';g.textAlign='center';g.textBaseline='middle';
+ for(const p of c.parts){if(p.t==='leg'){const s=sp[p.s];const[x,y]=e2p(s.x,s.y-s.r*.8);g.fillText(PDEF.leg.ic,x,(y+EOY)/2);continue}const[px,py]=edPartPos(p);const[x,y]=e2p(px,py);if(ED.hover===p){g.fillStyle='#ff5e7e88';g.beginPath();g.arc(x,y,16,0,6.283);g.fill()}g.fillText(PDEF[p.t].ic,x,y)}
+ if(ED.ghost){g.globalAlpha=.6;g.fillText(PDEF[ED.place].ic,ED.ghost[0],ED.ghost[1]);g.globalAlpha=1}}
+function edPt(e){const cv=$('edc'),r=cv.getBoundingClientRect();return[(e.clientX-r.left)/r.width*620,(e.clientY-r.top)/r.height*250]}
+function edFindPart(px,py){let best=null,bd=18;for(const p of S.creature.parts){let x,y;if(p.t==='leg'){const s=S.creature.spine[p.s];[x,y]=e2p(s.x,s.y-s.r*.8);y=(y+EOY)/2}else[x,y]=e2p(...edPartPos(p));const d=Math.hypot(x-px,y-py);if(d<bd){bd=d;best=p}}return best}
+function edFindSeg(ex,ey){let best=-1,bd=1e9;S.creature.spine.forEach((s,i)=>{const d=Math.hypot(ex-s.x,ey-s.y)-s.r;if(d<bd){bd=d;best=i}});return bd<.5?best:-1}
+function edDown(e){initAudio();const[px,py]=edPt(e),[ex,ey]=p2e(px,py),c=S.creature;
+ if(ED.tool==='del'){const p=edFindPart(px,py);if(p){c.parts.splice(c.parts.indexOf(p),1);sfx.pop();edChanged()}return}
+ if(ED.tool==='place'&&ED.place){const si=edFindSeg(ex,ey);if(si<0){sfx.bad();return}if(c.parts.length>=16){toast('零件太多了（最多 16 個）');sfx.bad();return}const s=c.spine[si];const a=Math.atan2(ey-s.y,ex-s.x);const def=PDEF[ED.place];
+  if(def.mouth)c.parts=c.parts.filter(p=>!PDEF[p.t].mouth);
+  if(ED.place==='leg'&&c.parts.some(p=>p.t==='leg'&&p.s===si)){toast('這節已經有腳了');return}
+  c.parts.push({t:ED.place,s:si,a:+a.toFixed(2)});sfx.pop();edChanged();return}
+ for(let i=0;i<c.spine.length;i++){const[x,y]=e2p(c.spine[i].x,c.spine[i].y);if(Math.hypot(x-px,y-py)<13){ED.drag={k:'seg',i};ED.sel=i;$('segR').value=c.spine[i].r*100;edDraw();return}}
+ const p=edFindPart(px,py);if(p&&p.t!=='leg'){ED.drag={k:'part',p};return}
+ const si=edFindSeg(ex,ey);if(si>=0){ED.sel=si;$('segR').value=c.spine[si].r*100;edDraw()}}
+function edMove(e){const[px,py]=edPt(e),[ex,ey]=p2e(px,py),c=S.creature;
+ if(ED.drag?.k==='seg'){const s=c.spine[ED.drag.i];s.x=clamp(+ex.toFixed(2),-4.2,4.2);s.y=clamp(+ey.toFixed(2),s.r*.6+.1,3.0);ED.dirty=true;edDraw();return}
+ if(ED.drag?.k==='part'){const si=edFindSeg(ex,ey);if(si>=0){const s=c.spine[si];ED.drag.p.s=si;ED.drag.p.a=+Math.atan2(ey-s.y,ex-s.x).toFixed(2);ED.dirty=true;edDraw()}return}
+ if(ED.tool==='del'){const h=edFindPart(px,py);if(h!==ED.hover){ED.hover=h;edDraw()}}
+ if(ED.tool==='place'){ED.ghost=[px,py];edDraw()}}
+function edUp(){if(ED.drag){ED.drag=null;edChanged()}}
+function edChanged(){ED.dirty=true;edStats();edDraw();save()}
+function edWheel(e){e.preventDefault();const s=S.creature.spine[ED.sel];if(!s)return;s.r=clamp(s.r-e.deltaY*.0012,.25,1.3);s.y=Math.max(s.y,s.r*.6+.1);$('segR').value=s.r*100;edChanged()}
+function edUpdate(dt){if(ED.dirty){ED.dirty=false;if(ED.mesh)scene.remove(ED.mesh);ED.mesh=buildCreature(morphed(S.creature));ED.mesh.scale.setScalar(.85);scene.add(ED.mesh)}
+ ED.rot+=dt*.35;if(ED.mesh){ED.mesh.rotation.y=-.5+Math.sin(ED.rot)*.75;animCreature(ED.mesh,dt,.25+.25*Math.sin(ED.rot*2))}
+ scene.traverse(o=>{if(o.userData.bub){o.position.y+=o.userData.bub*dt;if(o.position.y>9)o.position.y=0}})}
+function edSetup(){const cv=$('edc');cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);edDown(e)});cv.addEventListener('pointermove',edMove);cv.addEventListener('pointerup',edUp);cv.addEventListener('wheel',edWheel,{passive:false});cv.addEventListener('pointerleave',()=>{ED.ghost=null;edDraw()});
+ $('tMove').onclick=()=>{ED.tool='move';ED.place=null;edTools();edPalette()};$('tDel').onclick=()=>{ED.tool='del';ED.place=null;edTools();edPalette()};
+ $('tAdd').onclick=()=>{const sp=S.creature.spine;if(sp.length>=9){toast('最多 9 節');return}const a=sp[sp.length-1],b=sp[sp.length-2];sp.push({x:clamp(a.x+(a.x-b.x),-4.2,4.2),y:a.y,r:Math.max(.25,a.r*.8)});sfx.pop();edChanged()};
+ $('tRem').onclick=()=>{const sp=S.creature.spine;if(sp.length<=3){toast('至少要 3 節');return}sp.pop();S.creature.parts=S.creature.parts.filter(p=>p.s<sp.length);ED.sel=Math.min(ED.sel,sp.length-1);sfx.pop();edChanged()};
+ $('segR').oninput=e=>{const s=S.creature.spine[ED.sel];s.r=e.target.value/100;s.y=Math.max(s.y,s.r*.6+.1);edChanged()};
+ $('edName').oninput=e=>{S.creature.name=e.target.value||'無名獸';save()};
+ $('edC1').oninput=e=>{S.creature.color=e.target.value;edChanged()};$('edC2').oninput=e=>{S.creature.color2=e.target.value;edChanged()};
+ const sw=['#5ec8ff','#ff7eb6','#8ee06a','#ffb347','#b48cff','#ff6464','#ffe066','#4fd1c5','#8d6e63','#f5f5f5'],sw2=['#fff3c4','#ffffff','#ffd1e8','#c8f7c5','#ffe0b2','#d7c4ff','#333344','#ffd54f'];
+ sw.forEach(c=>{const i=document.createElement('i');i.style.background=c;i.onclick=()=>{S.creature.color=c;$('edC1').value=c;edChanged()};$('sw1').appendChild(i)});
+ sw2.forEach(c=>{const i=document.createElement('i');i.style.background=c;i.onclick=()=>{S.creature.color2=c;$('edC2').value=c;edChanged()};$('sw2').appendChild(i)});
+ document.querySelectorAll('#edright [data-p]').forEach(b=>b.onclick=()=>{S.creature.pattern=b.dataset.p;edChanged()});
+ $('edRand').onclick=()=>{const diet=dietOf(S.creature)||'herb';const r=randCreature(Math.random,{diet});r.parts=r.parts.filter(p=>S.unlocked[p.t]);if(!r.parts.some(p=>PDEF[p.t].mouth))r.parts.push({t:diet==='carn'?'mouthC':'mouthH',s:0,a:-.2});S.creature=r;$('edName').value=r.name;$('edC1').value=r.color;$('edC2').value=r.color2;ED.sel=0;sfx.pop();edChanged()};
+ $('edReset').onclick=()=>{const nm=S.creature.name;S.creature=defaultCreature(dietOf(S.creature)||'herb');S.creature.name=nm;ED.sel=0;edChanged()};
+ $('edDone').onclick=()=>{initAudio();if(!dietOf(S.creature)){toast('你的生物需要一張嘴才能吃東西！');sfx.bad();return}S.done.editor=1;save();goStage(S.edReturn||'creature')};
+}
+// ---------- ISLAND WORLD (shared by creature & tribe) ----------
+const ISL=88;
+function terrainH(x,z){const d=Math.hypot(x,z)/ISL;let h=(1-d*d)*5.2-1.1+Math.sin(x*.07+1)*Math.cos(z*.06)*1.5+Math.sin(x*.16+z*.11)*.55+Math.cos(z*.21-x*.05)*.35;if(d>1)h-=(d-1)*25;return h}
+const WD={};// world data
+const NSPOT=8;function nestSpots(){const r=mulberry(S.seed),out=[];const base=r()*6.28;for(let i=0;i<NSPOT;i++){const a=i===0?base:base+.45+(i-1)/(NSPOT-1)*6.283*.93;let rad=i===0?16:(i%2?52:38);while(rad>12&&terrainH(Math.cos(a)*rad,Math.sin(a)*rad)<1.2)rad-=3;out.push(new THREE.Vector3(Math.cos(a)*rad,0,Math.sin(a)*rad))}out.forEach(p=>p.y=terrainH(p.x,p.z));return out}
+function buildIsland(){
+ scene=new THREE.Scene();scene.add(skyDome('#5cb8ff','#e8f7ff'));scene.fog=new THREE.Fog(0xcfeeff,70,230);
+ scene.add(new THREE.HemisphereLight(0xe9f7ff,0x5a7a4a,1.25));
+ const sun=new THREE.DirectionalLight(0xfff1d6,2.6);sun.position.set(30,50,20);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-35,right:35,top:35,bottom:-35,near:1,far:150});sun.shadow.bias=-.0005;scene.add(sun);scene.add(sun.target);WD.sun=sun;
+ camera.clearViewOffset();camera.fov=55;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+ // terrain
+ const tg=new THREE.PlaneGeometry(300,300,150,150);tg.rotateX(-Math.PI/2);const pa=tg.attributes.position,col=[];const sand=new THREE.Color('#f1dd9b'),grass=new THREE.Color('#77c95a'),grass2=new THREE.Color('#4f9e48'),rock=new THREE.Color('#9a9a8a'),under=new THREE.Color('#c9b77a');
+ for(let i=0;i<pa.count;i++){const x=pa.getX(i),z=pa.getZ(i),h=terrainH(x,z);pa.setY(i,h);let c;if(h<.15)c=under.clone();else if(h<.7)c=sand.clone();else{c=grass.clone().lerp(grass2,clamp((Math.sin(x*.3)*Math.cos(z*.27)+1)/2,0,1)*.6);if(h>4.6)c.lerp(rock,clamp((h-4.6)/1.2,0,.8))}col.push(c.r,c.g,c.b)}
+ tg.setAttribute('color',new THREE.Float32BufferAttribute(col,3));tg.computeVertexNormals();const ter=new THREE.Mesh(tg,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95}));ter.receiveShadow=true;scene.add(ter);
+ const water=new THREE.Mesh(new THREE.PlaneGeometry(900,900),new THREE.MeshStandardMaterial({color:0x2fa3d8,transparent:true,opacity:.82,roughness:.12,metalness:.1}));water.rotation.x=-Math.PI/2;water.position.y=.05;scene.add(water);WD.water=water;
+ // clouds
+ const cm=new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,emissive:0xffffff,emissiveIntensity:.25});WD.clouds=[];for(let i=0;i<14;i++){const c=new THREE.Group();for(let k=0;k<4;k++){const s=new THREE.Mesh(GEO.sphLo,cm);s.scale.set(rnd(4,7),rnd(2,3.5),rnd(3,5));s.position.set(k*4-6,rnd(-1,1),rnd(-2,2));c.add(s)}c.position.set(rnd(-180,180),rnd(38,55),rnd(-180,180));scene.add(c);WD.clouds.push(c)}
+ // nests positions
+ WD.spots=nestSpots();
+ // trees
+ const rr=mulberry(S.seed+5);WD.trees=[];const trunkM=new THREE.MeshStandardMaterial({color:0x8a5a3a,roughness:.9}),leafMs=['#3fae4f','#58c46a','#2f9a5a','#7cc95a'].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.8})),fruitM=new THREE.MeshStandardMaterial({color:0xff4f5e,roughness:.35,emissive:0x400008});
+ let tries=0;while(WD.trees.length<70&&tries++<2000){const a=rr()*6.283,d=Math.sqrt(rr())*ISL*.9,x=Math.cos(a)*d,z=Math.sin(a)*d,h=terrainH(x,z);if(h<.9)continue;if(WD.spots.some(s=>Math.hypot(s.x-x,s.z-z)<9))continue;
+  const t=new THREE.Group();t.position.set(x,h-.1,z);const sc=.8+rr()*.7;const th=3*sc;const tr=new THREE.Mesh(GEO.cyl,trunkM);tr.scale.set(.28*sc,th,.28*sc);tr.position.y=th/2;tr.castShadow=true;t.add(tr);const lm=leafMs[Math.floor(rr()*4)];
+  for(let k=0;k<3;k++){const l=new THREE.Mesh(GEO.sph,lm);l.scale.setScalar((1.5-k*.25)*sc);l.position.set((rr()-.5)*sc,th+k*.9*sc,(rr()-.5)*sc);l.castShadow=true;t.add(l)}
+  const fruit=rr()<.45;const tree={g:t,x,z,fruits:[],regrow:0};if(fruit){for(let k=0;k<3;k++){const f=new THREE.Mesh(GEO.sphLo,fruitM);f.scale.setScalar(.28);const a2=k*2.1+rr();f.position.set(Math.cos(a2)*1.3*sc,th-.2*sc,Math.sin(a2)*1.3*sc);t.add(f);tree.fruits.push(f)}}
+  scene.add(t);WD.trees.push(tree)}
+ // rocks & flowers (instanced)
+ const rockG=new THREE.DodecahedronGeometry(1,0),rockI=new THREE.InstancedMesh(rockG,new THREE.MeshStandardMaterial({color:0x9a9a92,roughness:.9}),40),fl=new THREE.InstancedMesh(new THREE.SphereGeometry(.18,6,5),new THREE.MeshStandardMaterial({roughness:.6}),260),gr=new THREE.InstancedMesh(new THREE.ConeGeometry(.12,.6,4),new THREE.MeshStandardMaterial({color:0x4f9e48}),500);
+ const m4=new THREE.Matrix4(),q=new THREE.Quaternion(),fc=['#ffffff','#ffe066','#ff8fb0','#b48cff','#ff7a5c'].map(c=>new THREE.Color(c));
+ const place=(im,n,minH,scl,colf)=>{let c=0,k=0;while(c<n&&k++<5000){const a=rr()*6.283,d=Math.sqrt(rr())*ISL,x=Math.cos(a)*d,z=Math.sin(a)*d,h=terrainH(x,z);if(h<minH)continue;q.setFromEuler(new THREE.Euler(rr()*.3,rr()*6,rr()*.3));const s=scl();m4.compose(new THREE.Vector3(x,h+s.y*.3,z),q,s);im.setMatrixAt(c,m4);if(colf)im.setColorAt(c,colf());c++}im.count=c;im.instanceMatrix.needsUpdate=true;scene.add(im)};
+ place(rockI,40,.3,()=>{const s=rnd(.4,1.4);return new THREE.Vector3(s,s*.7,s)});rockI.castShadow=true;
+ place(fl,260,.8,()=>new THREE.Vector3(1,1,1),()=>fc[Math.floor(rr()*fc.length)]);place(gr,500,.8,()=>new THREE.Vector3(1,rnd(.6,1.4),1));
+ buildPlants(rr);
+ WD.cam={yaw:.6,pitch:.42,dist:11};
+}
+function nestMesh(color){const g=new THREE.Group();const tw=new THREE.Mesh(new THREE.TorusGeometry(2.2,.55,8,24),new THREE.MeshStandardMaterial({color:0xa07848,roughness:1}));tw.rotation.x=Math.PI/2;tw.position.y=.3;tw.receiveShadow=true;tw.castShadow=true;g.add(tw);const em=new THREE.MeshStandardMaterial({color,roughness:.4});for(let i=0;i<3;i++){const e=new THREE.Mesh(GEO.sph,em);e.scale.set(.35,.45,.35);e.position.set(Math.cos(i*2.1)*.6,.4,Math.sin(i*2.1)*.6);e.castShadow=true;g.add(e)}return g}
+function boneMesh(){const g=new THREE.Group(),m=new THREE.MeshStandardMaterial({color:0xfff2d6,roughness:.5});for(let i=0;i<6;i++){const b=new THREE.Mesh(new THREE.CapsuleGeometry(.12,1.2,4,6),m);b.position.set(rnd(-.6,.6),.15,rnd(-.6,.6));b.rotation.set(Math.PI/2,0,rnd(0,3));b.castShadow=true;g.add(b)}const sk=new THREE.Mesh(GEO.sph,m);sk.scale.set(.5,.4,.6);sk.position.y=.35;g.add(sk);const ring=new THREE.Mesh(new THREE.RingGeometry(1.3,1.5,32),new THREE.MeshBasicMaterial({color:0xffe27a,transparent:true,opacity:.6,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=.08;g.add(ring);g.userData.ring=ring;return g}
+function camFollow(target,dt,yOff=1.5){const c=WD.cam;const tx=target.x,ty=target.y+yOff,tz=target.z;const cp=new THREE.Vector3(tx+Math.sin(c.yaw)*Math.cos(c.pitch)*c.dist,ty+Math.sin(c.pitch)*c.dist,tz+Math.cos(c.yaw)*Math.cos(c.pitch)*c.dist);const gh=terrainH(cp.x,cp.z)+.8;if(cp.y<gh)cp.y=gh;camera.position.lerp(cp,Math.min(1,dt*6));camera.lookAt(tx,ty,tz);WD.sun.position.set(tx+30,50,tz+20);WD.sun.target.position.set(tx,0,tz);WD.water.position.y=.05+Math.sin(performance.now()*.001)*.06;for(const c of WD.clouds){c.position.x+=dt*1.2;if(c.position.x>200)c.position.x=-200}
+ const cx=camera.position.x,cz=camera.position.z;for(const t of WD.trees){const dc=Math.hypot(t.x-cx,t.z-cz),dp=Math.hypot(t.x-tx,t.z-tz);t.g.visible=!(dc<5.5&&dp>2.5)}}
+function inputDir(){const k=KEYS;let f=0,s=0;if(k.KeyW||k.ArrowUp)f+=1;if(k.KeyS||k.ArrowDown)f-=1;if(k.KeyA||k.ArrowLeft)s-=1;if(k.KeyD||k.ArrowRight)s+=1;if(!f&&!s)return null;const y=WD.cam.yaw;const v=new THREE.Vector3(-Math.sin(y)*f+Math.cos(y)*s,0,-Math.cos(y)*f-Math.sin(y)*s);return v.normalize()}
+function faceTo(g,dx,dz,dt,k=10){const tgt=Math.atan2(-dz,dx);let d=tgt-g.rotation.y;while(d>Math.PI)d-=6.283;while(d<-Math.PI)d+=6.283;g.rotation.y+=d*Math.min(1,dt*k)}
+function moveOnGround(o,dx,dz,minH=.35){const nx=o.position.x+dx,nz=o.position.z+dz;if(terrainH(nx,nz)>minH&&Math.hypot(nx,nz)<ISL){o.position.x=nx;o.position.z=nz;return true}if(terrainH(nx,o.position.z)>minH){o.position.x=nx;return true}if(terrainH(o.position.x,nz)>minH){o.position.z=nz;return true}return false}
+function particles(pos,color,n=10,spd=4){for(let i=0;i<n;i++){const m=new THREE.Mesh(GEO.sphLo,new THREE.MeshBasicMaterial({color,transparent:true}));m.scale.setScalar(rnd(.06,.16));m.position.copy(pos);m.userData.v=new THREE.Vector3(rnd(-1,1),rnd(.5,1.5),rnd(-1,1)).multiplyScalar(spd);m.userData.life=rnd(.5,.9);scene.add(m);WD.parts.push(m)}}
+function updParticles(dt){for(let i=WD.parts.length-1;i>=0;i--){const m=WD.parts[i];m.userData.life-=dt;m.userData.v.y-=9*dt;m.position.addScaledVector(m.userData.v,dt);m.material.opacity=clamp(m.userData.life*2,0,1);if(m.userData.life<=0){scene.remove(m);WD.parts.splice(i,1)}}}
+
+// ---------- CREATURE STAGE ----------
+const CR={};
+const PSCALE=.55;
+const KKEYS=['wingbird','horn','turtle','frog','crab','deer','lizard'];
+function speciesList(){const r=mulberry(S.seed+11);return KKEYS.map(k=>{const t=KSPEC[k],d=kspecCreature(k);const c=new THREE.Color(d.color);c.offsetHSL((r()-.5)*.05,0,(r()-.5)*.08);d.color='#'+c.getHexString();return{key:k,d,temper:t.temper,scale:t.scale,hpM:t.hp,spdM:t.spd,atkM:t.atk}})}
+function crSpState(){if(!S.cr.sp||S.cr.sp.length!==KKEYS.length){const old=S.cr.sp||[];S.cr.sp=KKEYS.map((k,i)=>old[i]&&old.length===KKEYS.length?old[i]:{rel:0,ally:0,ext:0,killed:0})}return S.cr.sp}
+function crInit(){
+ if(!S.cr)S.cr={bones:[],hp:100,hunger:80,pos:null};crSpState();dnaMap('creature');
+ buildIsland();WD.parts=[];clearLabels();
+ const st=statsOf(S.creature);CR.st=st;CR.diet=dietOf(S.creature);S.cr.hp=Math.min(S.cr.hp,80+st.atk*8);CR.wings=S.creature.parts.some(q=>q.t==="wing");CR.maxhp=80+st.atk*8;
+ // player
+ const pl=buildCreature(morphed(S.creature));pl.scale.setScalar(PSCALE);CR.sig=morphSig();const home=WD.spots[0];const sp0=S.cr.pos||{x:home.x+3,z:home.z+3};pl.position.set(sp0.x,terrainH(sp0.x,sp0.z),sp0.z);scene.add(pl);CR.pl=pl;CR.vy=0;CR.onGround=true;CR.cd=0;CR.lastHit=0;CR.t=0;
+ // home nest
+ const hn=nestMesh(S.creature.color);hn.position.copy(home);scene.add(hn);CR.home=home;addLabel(`🏠 ${S.creature.name}的巢（E 編輯）`,()=>home.clone().setY(home.y+3.2));
+ CR.mates=[];for(let i=0;i<2;i++){const m=buildCreature(morphed(S.creature));m.scale.setScalar(PSCALE*.75);m.position.set(home.x+Math.cos(i*3)*1.2,home.y,home.z+Math.sin(i*3)*1.2);m.rotation.y=i*3;scene.add(m);CR.mates.push(m)}
+ // species
+ CR.species=speciesList();CR.mobs=[];
+ CR.species.forEach((sp,i)=>{const ns=WD.spots[i+1],st=S.cr.sp[i];sp.nest=ns;sp.stats=statsOf(sp.d);sp.idx=i;const nm=nestMesh(sp.d.color);nm.position.copy(ns);scene.add(nm);
+  sp.label=addLabel('',()=>ns.clone().setY(ns.y+3.5));
+  if(st.ext)return;const cnt=3-Math.min(2,st.killed);
+  for(let k=0;k<cnt;k++){const m=buildCreature(sp.d);m.scale.setScalar(sp.scale);const a=k*1.7;m.position.set(ns.x+Math.cos(a)*3,0,ns.z+Math.sin(a)*3);m.position.y=terrainH(m.position.x,m.position.z);scene.add(m);
+   const hp=(30+sp.stats.atk*5+sp.scale*20)*sp.hpM;CR.mobs.push({g:m,sp,hp,max:hp,state:'wander',tx:m.position.x,tz:m.position.z,tt:rnd(0,3),cd:0,angry:0,spd:(3+sp.stats.spd*.4)*sp.spdM,follow:false,stun:0,poison:0,ccd:rnd(0,3)})}});
+ const fol=CR.species.find((sp,i)=>S.cr.sp[i].ally);if(fol){const m=CR.mobs.find(o=>o.sp===fol);if(m)m.follow=true}
+ // bones
+ CR.bones=[];const rr=mulberry(S.seed+77);for(let i=0;i<4;i++){if(S.cr.bones.includes(i))continue;let x,z,k=0;do{const a=rr()*6.283,d=20+rr()*55;x=Math.cos(a)*d;z=Math.sin(a)*d}while((terrainH(x,z)<1||WD.spots.some(s=>Math.hypot(s.x-x,s.z-z)<10))&&k++<100);const b=boneMesh();b.position.set(x,terrainH(x,z),z);scene.add(b);CR.bones.push({g:b,i});addLabel('🦴 古老骨頭',()=>b.position.clone().setY(b.position.y+1.6))}
+ CR.meats=[];
+ $('editor').classList.add('hide');$('c3d').classList.remove('hide');c2.classList.add('hide');$('bars').classList.remove('hide');$('cellpanel').classList.add('hide');
+ setMusic('creature');curProgress=crProgress;crActions();CR.social=null;
+ camera.position.set(pl.position.x+8,pl.position.y+6,pl.position.z+8);
+ if(TEST){const sp=CR.mobs.find(m=>m.sp.temper!=='aggressive')||CR.mobs[0];if(sp){const p=sp.g.position;pl.position.set(p.x+3.2,terrainH(p.x+3.2,p.z+1.5),p.z+1.5);WD.cam.yaw=Math.atan2(pl.position.x-p.x,pl.position.z-p.z)+.9;sp.g.rotation.y=0}if(Q.get('dna'))WD.cam.dist=6.5}
+}
+function crResolved(){return S.cr.sp.filter(s=>s.ally||s.ext).length}
+function crProgress(){return Math.min(100,crResolved()/4*100)}
+function crActions(){const L=[{t:'🎵 唱歌 1',f:()=>crSocialKey('sing')},{t:'💃 跳舞 2',f:()=>crSocialKey('dance')},{t:'✨ 擺姿勢 3',f:()=>crSocialKey('pose')},{t:'⚔️ 攻擊 F',f:crAttack},{t:'✋ 吃/互動 E',f:crUse}];const T=k=>tierOf(trLv('creature',k));if(T('horn')>=2)L.push({t:'🦏 衝撞 Q',f:crCharge});if(T('poison')>=2)L.push({t:'🦂 吐毒 Z',f:crSpit});if(T('glow')>=2)L.push({t:'✨ 閃光 X',f:crFlash});if(crProgress()>=100)L.push({t:'🛖 進化到部落階段！',cls:'big',f:()=>{S.done.creature=1;save();goStage('tribe')}});setActions(L)}
+function nearestMob(r){let best=null,bd=r;for(const m of CR.mobs){const d=m.g.position.distanceTo(CR.pl.position);if(d<bd){bd=d;best=m}}return best}
+const ACTIC={sing:'🎵',dance:'💃',pose:'✨'};
+function crSocialKey(a){initAudio();const pl=CR.pl;
+ if(CR.social){const so=CR.social;doAct(pl,a);sfx[a]();particles(pl.position.clone().setY(pl.position.y+2),a==='sing'?0xffe27a:a==='dance'?0xff8fb0:0x8fffe1,8,3);floatText(pl.position.clone().setY(pl.position.y+2.4),ACTIC[a]);
+  if(so.seq[so.i]===a){so.i++;sfx.good();if(so.i>=so.seq.length)crSocialEnd(true)}else crSocialEnd(false);renderSocial();return}
+ const m=nearestMob(5);if(!m){doAct(pl,a);sfx[a]();toast('靠近其他生物再表演給牠看吧！');return}
+ const st=S.cr.sp[m.sp.idx];if(st.ally){doAct(pl,a);sfx[a]();doAct(m.g,'happy');floatText(m.g.position.clone().setY(m.g.position.y+2),'❤️');return}
+ if(m.angry>0||m.sp.temper==='aggressive'){toast(`${m.sp.d.name}很兇，不想跟你玩！只能打敗牠們`);sfx.bad();return}
+ const len=3+(m.sp.temper==='shy'?1:0),acts=['sing','dance','pose'];const seq=[];for(let i=0;i<len;i++)seq.push(acts[Math.floor(Math.random()*3)]);
+ CR.social={m,seq,i:0,t:6+len,max:6+len};m.state='watch';$('social').classList.remove('hide');renderSocial();
+ doAct(pl,a);sfx[a]();toast(`${m.sp.d.name}想看你表演！照上面的順序按 1 / 2 / 3`)}
+function renderSocial(){const so=CR.social||TR.social;if(!so)return;$('soTitle').innerHTML=`跟 <b style="color:#ffe27a">${so.name||so.m.sp.d.name}</b> 交朋友！照順序表演：`;$('soSeq').innerHTML=so.seq.map((a,i)=>`<span class="${i<so.i?'ok':i===so.i?'cur':''}">${ACTIC[a]}</span>`).join('');$('soT').style.width=(so.t/so.max*100)+'%'}
+function crSocialEnd(ok){const so=CR.social;CR.social=null;$('social').classList.add('hide');const m=so.m,st=S.cr.sp[m.sp.idx];m.state='wander';
+ if(ok){const gain=Math.round((20+CR.st.soc*7)*(1+trLv('creature','glow')*1.5));gainDNA('creature',m.sp.key,4);st.rel=Math.min(100,st.rel+gain);doAct(m.g,'happy');sfx.heart();floatText(m.g.position.clone().setY(m.g.position.y+2.2),`❤️ +${gain}`,'#ff8fb0');addDNA(4);
+  if(st.rel>=100&&!st.ally){st.ally=1;addDNA(40);sfx.win();toast(`🤝 ${m.sp.d.name} 跟你成為好朋友了！+40🧬`,3500);CR.mobs.filter(o=>o.sp===m.sp).forEach(o=>{doAct(o.g,'happy');particles(o.g.position.clone().setY(o.g.position.y+1.5),0xff8fb0,10,3)});m.follow=true;crCheck()}}
+ else{st.rel=Math.max(0,st.rel-10);sfx.bad();floatText(m.g.position.clone().setY(m.g.position.y+2.2),'😒 不對！','#ffb0b0');if(m.sp.temper==='shy'){m.state='flee';m.tt=3}}
+ save()}
+function crAttack(){initAudio();if(CR.cd>0)return;CR.cd=.55;const pl=CR.pl;doAct(pl,'bite');const m=nearestMob(3.2);sfx.bite();if(!m)return;const st=S.cr.sp[m.sp.idx];if(st.ally){toast('牠是你的朋友，不要打牠！');return}
+ const dmg=(6+CR.st.atk*3.5)*(1+trLv('creature','claw')*1.6)*(m.sp.key==='turtle'?.6:1);m.hp-=dmg;if(tierOf(trLv('creature','poison'))>=3)m.poison=4;flash(m.g);doAct(m.g,'hurt');particles(m.g.position.clone().setY(m.g.position.y+1),0xffffff,6,3);floatText(m.g.position.clone().setY(m.g.position.y+2),'-'+Math.round(dmg),'#ffd0d0');faceTo(pl,m.g.position.x-pl.position.x,m.g.position.z-pl.position.z,1,100);
+ const away=m.g.position.clone().sub(pl.position).setY(0).normalize();moveOnGround(m.g,away.x*.8,away.z*.8);st.rel=Math.max(0,st.rel-15);
+ CR.mobs.filter(o=>o.sp===m.sp&&o.g.position.distanceTo(m.g.position)<14).forEach(o=>{o.angry=12});
+ if(m.hp<=0)crKill(m)}
+function crKill(m){const st=S.cr.sp[m.sp.idx];scene.remove(m.g);CR.mobs.splice(CR.mobs.indexOf(m),1);particles(m.g.position.clone().setY(m.g.position.y+1),new THREE.Color(m.sp.d.color),18,5);sfx.pop();addDNA(12);floatText(m.g.position.clone().setY(m.g.position.y+1.5),'+12🧬','#7ff7ff');st.killed++;
+ const meat=new THREE.Mesh(GEO.sph,new THREE.MeshStandardMaterial({color:0xc0392b,roughness:.5}));meat.scale.set(.5,.3,.4);meat.position.copy(m.g.position).setY(m.g.position.y+.25);meat.castShadow=true;const bn=new THREE.Mesh(new THREE.CapsuleGeometry(.07,.6,4,6),new THREE.MeshStandardMaterial({color:0xfff2d6}));bn.rotation.z=Math.PI/2;bn.position.copy(meat.position);scene.add(meat);scene.add(bn);CR.meats.push({g:meat,b:bn,key:m.sp.key});
+ if(!CR.mobs.some(o=>o.sp===m.sp)){st.ext=1;addDNA(25);toast(`⚔️ 你打敗了所有的${m.sp.d.name}！+25🧬`,3500);crCheck()}save()}
+function crCheck(){crActions();updateStageBar();if(crProgress()>=100&&!CR.told){CR.told=true;toast('🧠 你的物種變得更聰明了！可以進化到部落階段了',4500);sfx.unlock()}}
+function crUse(){initAudio();const pl=CR.pl,p=pl.position;
+ if(p.distanceTo(CR.home)<4){S.cr.pos={x:p.x,z:p.z};S.edReturn='creature';save();goStage('editor');return}
+ for(const b of CR.bones)if(b.g.position.distanceTo(p)<3){const locked=Object.keys(PDEF).filter(k=>!S.unlocked[k]);scene.remove(b.g);CR.bones.splice(CR.bones.indexOf(b),1);S.cr.bones.push(b.i);addDNA(15);if(locked.length){const k=locked[Math.floor(Math.random()*locked.length)];S.unlocked[k]=1;sfx.unlock();toast(`🦴 從骨頭裡發現新零件「${PDEF[k].n}」${PDEF[k].ic}！回巢穴裝上吧 +15🧬`,4000)}else{sfx.dna();toast('🦴 挖到骨頭 +15🧬')}LBL.filter(l=>!l.float&&l.el.textContent.includes('骨頭')&&l.getPos().distanceTo(b.g.position)<2).forEach(l=>{l.el.remove();LBL.splice(LBL.indexOf(l),1)});save();return}
+ for(const m of CR.meats)if(m.g.position.distanceTo(p)<2.5){scene.remove(m.g);scene.remove(m.b);CR.meats.splice(CR.meats.indexOf(m),1);const nm=KSRC[m.key].n;if(canEat(CR.diet,'meat')){gainDNA('creature',m.key,14);crEat(35,3);floatText(p.clone().setY(p.y+2.8),`${KSRC[m.key].ic} ${nm} DNA +14`,KSRC[m.key].col)}else{gainDNA('creature',m.key,8);addDNA(2);sfx.dna();toast(`草食動物不吃肉，但你吸收了${nm}的 DNA（+8）`);floatText(p.clone().setY(p.y+2.8),`${KSRC[m.key].ic} +8`,KSRC[m.key].col)}crMorphCheck();save();return}
+ const pp=nearPlant(p);if(pp){const info=KSRC[pp.k];if(!canEat(CR.diet,'fruit')){toast(`肉食動物不吃${info.n}！`);sfx.bad();return}const it=pp.items.find(i=>i.visible);it.visible=false;if(!pp.items.some(i=>i.visible))pp.regrow=25;gainDNA('creature',pp.k,6);crEat(20,2);floatText(p.clone().setY(p.y+2.8),`${info.ic} ${info.n} DNA +6`,info.col);crMorphCheck();save();return}
+ for(const t of WD.trees){const vis=t.fruits.filter(f=>f.visible);if(vis.length&&Math.hypot(t.x-p.x,t.z-p.z)<3.2){if(!canEat(CR.diet,'fruit')){toast('你是肉食動物，不吃果子！去找肉吧');sfx.bad();return}vis[0].visible=false;t.regrow=30;crEat(25,2);return}}
+ toast('附近沒有可以互動的東西');}
+function crEat(h,dna){S.cr.hunger=Math.min(100,S.cr.hunger+h);S.cr.hp=Math.min(CR.maxhp,S.cr.hp+10);addDNA(dna);sfx.eat();floatText(CR.pl.position.clone().setY(CR.pl.position.y+2),`😋 +${dna}🧬`,'#7ff7ff')}
+function crHurt(n,src){n*=1-Math.min(.65,trLv('creature','shell')*1.1);if(src&&src.g){const sp=tierOf(trLv('creature','spike'));if(sp>=2){src.hp-=sp>=3?8:4;flash(src.g);if(src.hp<=0)crKill(src)}}S.cr.hp-=n;CR.lastHit=CR.t;flash(CR.pl);doAct(CR.pl,'hurt');sfx.hurt();floatText(CR.pl.position.clone().setY(CR.pl.position.y+2),'-'+Math.round(n),'#ff6b7d');if(S.cr.hp<=0){toast('💫 你昏倒了……在巢穴醒來（失去一些 DNA）',3500);S.dna=Math.floor(S.dna*.9);setDNA();S.cr.hp=CR.maxhp;S.cr.hunger=Math.max(S.cr.hunger,60);CR.pl.position.copy(CR.home).add(new THREE.Vector3(2,0,2));CR.mobs.forEach(m=>m.angry=0);save()}}
+function crUpdate(dt){const pl=CR.pl,p=pl.position,st=CR.st;CR.t+=dt;CR.cd-=dt;
+ // player move
+ const dir=inputDir();let mv=0;const spd=(4+st.spd*.85)*(1+trLv('creature','leg')*1.4)*(CR.dash>0?3.2:1);CR.dash-=dt;if(CR.dash>0){const fx=Math.cos(pl.rotation.y),fz=-Math.sin(pl.rotation.y);moveOnGround(pl,fx*spd*dt,fz*spd*dt);for(const m of CR.mobs)if(!m.hitDash&&m.g.position.distanceTo(p)<2.4&&!S.cr.sp[m.sp.idx].ally){m.hitDash=1;const dmg=tierOf(trLv('creature','horn'))>=3?30:18;m.hp-=dmg;m.angry=10;flash(m.g);doAct(m.g,'hurt');moveOnGround(m.g,fx*3,fz*3);floatText(m.g.position.clone().setY(m.g.position.y+2),'💥-'+dmg,'#ffb070');sfx.bite();if(m.hp<=0)crKill(m)}}
+ if(dir&&!CR.social){mv=1;moveOnGround(pl,dir.x*spd*dt,dir.z*spd*dt);faceTo(pl,dir.x,dir.z,dt)}
+ const gh=terrainH(p.x,p.z);const canGlide=CR.wings||tierOf(trLv('creature','wing'))>=2;CR.vy-=(KEYS.Space&&CR.vy<0&&canGlide?Math.max(3,7-trLv('creature','wing')*6):22)*dt;p.y+=CR.vy*dt;if(p.y<=gh){p.y=gh;CR.vy=0;CR.onGround=true;pl.userData.air=false}else pl.userData.air=true;
+ animCreature(pl,dt,mv);
+ // hunger/hp
+ CR.poisoned=(CR.poisoned||0)-dt;if(CR.poisoned>0){S.cr.hp-=dt*2;CR.lastHit=CR.t}const leaf=trLv('creature','leaf');S.cr.hunger=Math.max(0,S.cr.hunger-dt*.7*(1-Math.min(.6,leaf)));if(tierOf(leaf)>=2)S.cr.hp=Math.min(CR.maxhp,S.cr.hp+dt*(tierOf(leaf)>=3?3:1.5));if(S.cr.hunger<=0)crHurt(dt*3);else if(CR.t-CR.lastHit>4)S.cr.hp=Math.min(CR.maxhp,S.cr.hp+dt*(p.distanceTo(CR.home)<4?12:1.5));
+ // mates idle
+ CR.mates.forEach(m=>{faceTo(m,p.x-m.position.x,p.z-m.position.z,dt,3);animCreature(m,dt,0)});
+ // mobs
+ for(const m of [...CR.mobs]){const g=m.g,sp=m.sp,sst=S.cr.sp[sp.idx];m.cd-=dt;m.angry-=dt;const dv=p.clone().sub(g.position);dv.y=0;const d=dv.length();let tx=null,tz=null,s=m.spd,mvm=0;
+  m.stun-=dt;m.ccd-=dt;if(m.poison>0){m.poison-=dt;m.hp-=dt*(tierOf(trLv('creature','poison'))>=3?5:3);if(Math.random()<dt*3)particles(g.position.clone().setY(g.position.y+1),0xa6ff4a,2,1.5);if(m.hp<=0){crKill(m);continue}}if(m.stun>0){animCreature(g,dt,0);g.userData.body.rotation.z=Math.sin(CR.t*8)*.15;continue}
+  const hostile=!sst.ally&&(m.angry>0||(sp.temper==='aggressive'&&d<10));
+  if(m.state==='watch'){faceTo(g,dv.x,dv.z,dt)}
+  else if(m.follow&&sst.ally){if(d>4){tx=p.x;tz=p.z;s=Math.max(s,spd*.95)}const en=CR.mobs.find(o=>o!==m&&o.angry>0&&!S.cr.sp[o.sp.idx].ally&&o.g.position.distanceTo(g.position)<6);if(en&&m.cd<=0){m.cd=1.2;en.hp-=6;flash(en.g);doAct(g,'bite');if(en.hp<=0)crKill(en)}}
+  else if(hostile&&!(sp.temper==='shy'&&m.angry>0)){if(d>1.6+sp.scale){tx=p.x;tz=p.z;s*=1.25;if(sp.key==='horn'&&d<9&&m.ccd<=0){m.ccd=4;m.charge=.6}if(m.charge>0){m.charge-=dt;s*=2.8}}else{faceTo(g,dv.x,dv.z,dt);if(m.cd<=0){m.cd=1.1;doAct(g,'bite');sfx.bite();crHurt((3+sp.stats.atk*1.8)*sp.atkM,m);if(sp.key==='lizard')CR.poisoned=3}}}
+  else if(m.state==='flee'||(sp.temper==='shy'&&(m.angry>0||d<3.5&&!sst.ally&&!CR.social))){m.tt-=dt;tx=g.position.x-dv.x;tz=g.position.z-dv.z;s*=1.3;if(m.tt<=0&&m.state==='flee')m.state='wander'}
+  else{if(sp.key==='wingbird'&&Math.random()<dt*.3)m.hop=.6;m.tt-=dt;if(m.tt<=0){m.tt=rnd(2,6);const a=rnd(0,6.28),r=rnd(1,9);m.tx=sp.nest.x+Math.cos(a)*r;m.tz=sp.nest.z+Math.sin(a)*r;m.idle=Math.random()<.35}if(!m.idle){tx=m.tx;tz=m.tz;s*=.5}}
+  if(tx!==null){const ex=tx-g.position.x,ez=tz-g.position.z,ed=Math.hypot(ex,ez);if(ed>.4){mvm=Math.min(1,s/4);moveOnGround(g,ex/ed*s*dt,ez/ed*s*dt);faceTo(g,ex,ez,dt,6)}}
+  m.hop=(m.hop||0)-dt;g.position.y=terrainH(g.position.x,g.position.z)+(m.hop>0?Math.sin(m.hop/.6*Math.PI)*1.6:0);animCreature(g,dt,mvm)}
+ // social timer
+ if(CR.social){CR.social.t-=dt;renderSocial();if(CR.social.t<=0)crSocialEnd(false)}
+ // trees regrow
+ for(const t of WD.trees)if(t.regrow>0){t.regrow-=dt;if(t.regrow<=0)t.fruits.forEach(f=>f.visible=true)}
+ updPlants(dt,CR.t);
+ for(const b of CR.bones){b.g.userData.ring.material.opacity=.35+Math.sin(CR.t*4)*.3;b.g.rotation.y+=dt*.3}
+ // labels
+ CR.species.forEach((sp,i)=>{const s=S.cr.sp[i];const ic=KSRC[sp.key].ic;sp.label.set(s.ext?`🪦 ${ic}${sp.d.name}（已打敗）`:s.ally?`🤝 ${ic}${sp.d.name}（好朋友）`:`${{friendly:'😊',shy:'🙈',aggressive:'😠'}[sp.temper]} ${ic}${sp.d.name}・${KTR[KSRC[sp.key].tr].n} ❤️${s.rel}/100`)});
+ // prompt
+ let pr='';if(p.distanceTo(CR.home)<4)pr='按 E 回到生物編輯器（巢穴裡會快速回血）';else{const m=nearestMob(5);if(m&&!CR.social){const s=S.cr.sp[m.sp.idx];pr=s.ally?`${KSRC[m.sp.key].ic}${m.sp.d.name} 是你的朋友 ❤️`:m.sp.temper==='aggressive'||m.angry>0?`${m.sp.d.name} 很兇！按 F 攻擊`:`${m.sp.d.name}：按 1 唱歌 / 2 跳舞 / 3 擺姿勢 交朋友，或 F 攻擊`}else{if(CR.bones.some(b=>b.g.position.distanceTo(p)<3))pr='按 E 挖骨頭';else if(CR.meats.some(m=>m.g.position.distanceTo(p)<2.5))pr='按 E 吃肉';else if(nearPlant(p)){const k=nearPlant(p).k,i=KSRC[k];pr=`按 E 吃 ${i.ic}${i.n}（${KTR[i.tr].n} DNA）`}else if(WD.trees.some(t=>t.fruits.some(f=>f.visible)&&Math.hypot(t.x-p.x,t.z-p.z)<3.2))pr='按 E 吃果子'}}
+ if(CR.t<10&&!pr)pr='WASD 走路 · 拖曳滑鼠轉鏡頭 · 去認識島上的其他生物吧！';$('prompt').textContent=pr;
+ CR.hudT=(CR.hudT||0)-dt;if(CR.hudT<=0){CR.hudT=.2;setBars(bar('❤️ 生命',S.cr.hp,CR.maxhp,'linear-gradient(90deg,#ff5e7e,#ff9e9e)')+bar('🍖 飽足',S.cr.hunger,100,'linear-gradient(90deg,#ffb347,#ffe066)')+`<div id="statbox">${S.creature.name} · ${{herb:'🌿草食',carn:'🥩肉食',omni:'😋雜食'}[CR.diet]}<br>🏃 速度 ${st.spd} · ⚔️ 攻擊 ${st.atk} · 🎵 社交 ${st.soc}<br>🛡️ 防禦 ${Math.round(Math.min(.65,trLv('creature','shell')*1.1)*100)}%${CR.poisoned>0?' · 🤢中毒':''}<br>🤝 朋友 ${S.cr.sp.filter(s=>s.ally).length} · ⚔️ 打敗 ${S.cr.sp.filter(s=>s.ext).length} （目標：共 4 種）</div>`+dnaPanel('creature'))}
+ if(Math.floor(CR.t)%10===0&&Math.floor(CR.t-dt)%10!==0){S.cr.pos={x:p.x,z:p.z};save();updateStageBar()}
+ updParticles(dt);camFollow(p,dt,1.2)}
+// ---------- plant patches (vegetarian DNA) ----------
+function plantMesh(k){const g=new THREE.Group(),items=[];const M=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.6},o));const add=(geo,m,sc,pos,it)=>{const x=new THREE.Mesh(geo,m);x.scale.copy(sc);x.position.copy(pos);x.castShadow=true;g.add(x);if(it)items.push(x);return x};const V=(a,b,c)=>new THREE.Vector3(a,b,c);
+ if(k==='shroom'){const cap=M(0x4ff0ff,{emissive:0x1fb8d0,emissiveIntensity:.9}),stem=M(0xf4f0e0);for(let i=0;i<4;i++){const a=i*1.6,r=i?0.9:0,h=i?.6:1.2,s=i?.45:.9;add(GEO.cyl,stem,V(.12*s,h,.12*s),V(Math.cos(a)*r,h/2,Math.sin(a)*r));const c=add(new THREE.SphereGeometry(1,14,8,0,6.283,0,Math.PI/2),cap,V(.55*s,.4*s,.55*s),V(Math.cos(a)*r,h,Math.sin(a)*r),i>0)}}
+ else if(k==='cactus'){const gm=M(0x5f9f3a);add(new THREE.CapsuleGeometry(.4,1.6,4,10),gm,V(1,1,1),V(0,1.2,0));for(const s of[-1,1]){const a=add(new THREE.CapsuleGeometry(.22,.6,4,8),gm,V(1,1,1),V(s*.6,1.3+s*.2,0));}const fm=M(0xff5fa8,{roughness:.35});for(let i=0;i<3;i++)add(GEO.sphLo,fm,V(.2,.24,.2),V(Math.cos(i*2.1)*.32,2.15,Math.sin(i*2.1)*.32),true)}
+ else if(k==='nut'){add(GEO.cyl,M(0x7a5232),V(.2,1.6,.2),V(0,.8,0));add(GEO.sph,M(0x5a8f3a),V(1.2,1,1.2),V(0,2,0));const nm=M(0x9a6a3a,{roughness:.8,flatShading:true});for(let i=0;i<3;i++)add(new THREE.DodecahedronGeometry(1,0),nm,V(.22,.26,.22),V(Math.cos(i*2.1)*1.05,1.6,Math.sin(i*2.1)*1.05),true)}
+ else if(k==='berry'){const bm=M(0x3f8f45);for(let i=0;i<3;i++)add(GEO.sph,bm,V(.7,.55,.7),V(Math.cos(i*2.1)*.45,.5,Math.sin(i*2.1)*.45));const be=M(0x6a7dff,{roughness:.2});for(let i=0;i<4;i++)add(GEO.sphLo,be,V(.2,.2,.2),V(Math.cos(i*1.6)*.75,.85+(i%2)*.2,Math.sin(i*1.6)*.75),true)}
+ else if(k==='kelp'){const km=M(0x2f9a5a,{side:THREE.DoubleSide});for(let i=0;i<5;i++){const a=i*1.3,h=1.2+(i%3)*.5;const f=add(GEO.sph,km,V(.18,h,.05),V(Math.cos(a)*.4,h*.8,Math.sin(a)*.4));f.rotation.set(Math.sin(a)*.25,a,Math.cos(a)*.25);f.userData.sway=1}const lm=M(0x6fdc7a);for(let i=0;i<3;i++)add(GEO.sphLo,lm,V(.3,.08,.18),V(Math.cos(i*2.1)*.7,.25,Math.sin(i*2.1)*.7),true)}
+ else if(k==='cloud'){add(GEO.cyl,M(0x6fae4a),V(.06,1.4,.06),V(0,.7,0));const pm=M(0xffffff,{emissive:0xdde8ff,emissiveIntensity:.35,roughness:1});for(let i=0;i<4;i++)add(GEO.sphLo,pm,V(.32,.28,.32),V(Math.cos(i*1.57)*.3,1.5+(i%2)*.15,Math.sin(i*1.57)*.3),true);add(GEO.sphLo,M(0xffe27a),V(.15,.15,.15),V(0,1.65,0))}
+ g.userData.items=items;return g}
+function buildPlants(rr){WD.plants=[];const kinds=['shroom','cactus','nut','berry','kelp','cloud'];for(const k of kinds){let c=0,t=0;while(c<5&&t++<600){const a=rr()*6.283,d=Math.sqrt(rr())*ISL*.92,x=Math.cos(a)*d,z=Math.sin(a)*d,h=terrainH(x,z);if(k==='kelp'?(h<.25||h>1.1):h<1)continue;if(WD.spots.some(s=>Math.hypot(s.x-x,s.z-z)<7))continue;const g=plantMesh(k);g.position.set(x,h-.05,z);g.rotation.y=rr()*6;scene.add(g);WD.plants.push({k,g,x,z,items:g.userData.items,regrow:0});c++}}}
+function nearPlant(p,r=2.8){let b=null,bd=r;for(const pl of WD.plants){const d=Math.hypot(pl.x-p.x,pl.z-p.z);if(d<bd&&pl.items.some(i=>i.visible)){bd=d;b=pl}}return b}
+function updPlants(dt,t){for(const pl of WD.plants){if(pl.regrow>0){pl.regrow-=dt;if(pl.regrow<=0)pl.items.forEach(i=>i.visible=true)}if(pl.k==='kelp')pl.g.children.forEach((c,i)=>{if(c.userData.sway)c.rotation.z=Math.sin(t*1.5+i)*.2})}}
+// ---------- trait abilities & morphing ----------
+function crCharge(){const t=tierOf(trLv('creature','horn'));if(t<2){toast('劈角獸 DNA 到 30% 才能衝撞');return}if((CR.ccd||0)>CR.t)return;CR.ccd=CR.t+(t>=3?3:5);CR.dash=.45;CR.mobs.forEach(m=>m.hitDash=0);sfx.whoosh();doAct(CR.pl,'bite');particles(CR.pl.position.clone().setY(CR.pl.position.y+.5),0xd9b38c,10,3)}
+function crSpit(){const t=tierOf(trLv('creature','poison'));if(t<2){toast('毒刺 DNA 到 30% 才能吐毒');return}if((CR.zcd||0)>CR.t)return;const m=nearestMob(9);CR.zcd=CR.t+3;doAct(CR.pl,'bite');tone(500,.25,{type:'sawtooth',v:.1,to:150,lp:1500});if(!m){toast('附近沒有目標');return}if(S.cr.sp[m.sp.idx].ally)return;m.poison=t>=3?7:5;m.angry=10;const a=CR.pl.position.clone().setY(CR.pl.position.y+1),b=m.g.position.clone().setY(m.g.position.y+1);for(let i=0;i<8;i++)particles(a.clone().lerp(b,i/8),0xa6ff4a,1,1);floatText(b.clone().setY(b.y+1),'🤢 中毒','#b6ff4a')}
+function crFlash(){const t=tierOf(trLv('creature','glow'));if(t<2){toast('發光 DNA 到 30% 才能閃光');return}if((CR.xcd||0)>CR.t)return;CR.xcd=CR.t+(t>=3?5:8);sfx.pose();particles(CR.pl.position.clone().setY(CR.pl.position.y+1.5),0xcfffff,24,7);let n=0;for(const m of CR.mobs)if(m.g.position.distanceTo(CR.pl.position)<(t>=3?10:7)&&!S.cr.sp[m.sp.idx].ally){m.stun=t>=3?4:2.5;n++;floatText(m.g.position.clone().setY(m.g.position.y+2),'💫','#fff')}if(!n)toast('✨ 閃亮亮！（靠近敵人用可以震暈牠們）')}
+function crMorphCheck(){const sig=morphSig();if(sig===CR.sig)return;CR.sig=sig;const old=CR.pl,ng=buildCreature(morphed(S.creature));ng.scale.setScalar(PSCALE);ng.position.copy(old.position);ng.rotation.y=old.rotation.y;scene.remove(old);scene.add(ng);CR.pl=ng;particles(ng.position.clone().setY(ng.position.y+1),0x8fffe1,14,3);
+ CR.mates.forEach((m,i)=>{const n2=buildCreature(morphed(S.creature));n2.scale.setScalar(PSCALE*.75);n2.position.copy(m.position);n2.rotation.y=m.rotation.y;scene.remove(m);scene.add(n2);CR.mates[i]=n2})}
+onTier=(stage,tr,t)=>{if(stage==='creature'){if(t>=2){const pk=Object.keys(PDEF).find(k=>PDEF[k].trait===tr);if(pk)S.unlocked[pk]=1}if(STAGE==='creature')crActions()}if(stage==='cell'&&STAGE==='cell')cellActions()};
+// ---------- TRIBE STAGE ----------
+const TR={};
+function hutMesh(color,big){const g=new THREE.Group();const s=big?1.3:1;const wall=new THREE.Mesh(new THREE.CylinderGeometry(2.2*s,2.5*s,2.2*s,14),new THREE.MeshStandardMaterial({color:0x9c6b43,roughness:.95}));wall.position.y=1.1*s;wall.castShadow=true;wall.receiveShadow=true;g.add(wall);
+ const roof=new THREE.Mesh(new THREE.ConeGeometry(3.2*s,2.8*s,14),new THREE.MeshStandardMaterial({color:0xe2c46b,roughness:1}));roof.position.y=3.5*s;roof.castShadow=true;g.add(roof);
+ const door=new THREE.Mesh(new THREE.BoxGeometry(.3,1.5*s,1.1*s),new THREE.MeshStandardMaterial({color:0x2a1a10}));door.position.set(2.35*s,.75*s,0);g.add(door);
+ const band=new THREE.Mesh(new THREE.TorusGeometry(2.35*s,.12,6,24),new THREE.MeshStandardMaterial({color}));band.rotation.x=Math.PI/2;band.position.y=1.6*s;g.add(band);
+ // totem
+ const tot=new THREE.Group();tot.position.set(2.5*s,0,2.6*s);const tm=new THREE.MeshStandardMaterial({color:0x7a4a2a});for(let i=0;i<3;i++){const b=new THREE.Mesh(GEO.cyl,tm);b.scale.set(.35,.9,.35);b.position.y=.45+i*.9;b.castShadow=true;tot.add(b);const e=new THREE.Mesh(GEO.sphLo,new THREE.MeshStandardMaterial({color}));e.scale.setScalar(.12);e.position.set(.33,.55+i*.9,.12);tot.add(e);const e2=e.clone();e2.position.z=-.12;tot.add(e2)}const top=new THREE.Mesh(GEO.cone,new THREE.MeshStandardMaterial({color}));top.scale.set(.5,.6,.5);top.position.y=3;tot.add(top);g.add(tot);
+ const flag=new THREE.Mesh(new THREE.PlaneGeometry(1.2,.7),new THREE.MeshStandardMaterial({color,side:THREE.DoubleSide}));flag.position.set(.6,5.6*s,0);g.add(flag);const pole=new THREE.Mesh(GEO.cyl,tm);pole.scale.set(.05,2,.05);pole.position.y=5.2*s;g.add(pole);g.userData.flag=flag;g.userData.band=band;return g}
+function campfire(){const g=new THREE.Group();const lm=new THREE.MeshStandardMaterial({color:0x6b4428});for(let i=0;i<4;i++){const l=new THREE.Mesh(GEO.cyl,lm);l.scale.set(.12,1.4,.12);l.rotation.set(Math.PI/2,0,i*Math.PI/4);l.position.y=.15;g.add(l)}const fl=new THREE.Mesh(GEO.cone,new THREE.MeshStandardMaterial({color:0xffa53a,emissive:0xff7a1a,emissiveIntensity:1.5,transparent:true,opacity:.9}));fl.scale.set(.45,1.1,.45);fl.position.y=.7;g.add(fl);const L=new THREE.PointLight(0xff9a40,8,12);L.position.y=1.4;g.add(L);g.userData.fl=fl;g.userData.L=L;return g}
+function spear(){const g=new THREE.Group();const s=new THREE.Mesh(GEO.cyl,new THREE.MeshStandardMaterial({color:0x8a5a3a}));s.scale.set(.06,2.6,.06);g.add(s);const t=new THREE.Mesh(GEO.cone,new THREE.MeshStandardMaterial({color:0xcfd6dd}));t.scale.set(.13,.4,.13);t.position.y=1.45;g.add(t);return g}
+function trMember(d,sc){const m=buildCreature(d);m.scale.setScalar(sc);const sp=spear();sp.position.set(.3,m.userData.height*.6,.9);sp.rotation.z=-.3;m.add(sp);return m}
+function trInit(){
+ if(!S.cr)S.cr={bones:[],hp:100,hunger:80};crSpState();dnaMap('creature');const IDX=KKEYS.map((_,i)=>i);
+ buildIsland();WD.parts=[];clearLabels();
+ const sps=speciesList();
+ if(!S.tr){const order=IDX.slice().sort((a,b)=>(S.cr.sp[b].ally-S.cr.sp[a].ally)||(S.cr.sp[a].ext-S.cr.sp[b].ext));const rivals=order.filter(i=>!S.cr.sp[i].ext).slice(0,2);while(rivals.length<2)rivals.push(IDX.find(i=>!rivals.includes(i)));
+  S.tr={food:20,members:3,pets:0,gather:false,rivals:rivals.map(i=>({i,rel:S.cr.sp[i].ally?50:10,state:'neutral',food:30,def:4})),theft:60,allyGift:30}}
+ TR.st=statsOf(S.creature);TR.t=0;TR.social=null;
+ const home=WD.spots[0];TR.home=home;
+ const hut=hutMesh(S.creature.color,true);hut.position.copy(home).add(new THREE.Vector3(-2,-.1,-2));scene.add(hut);TR.hut=hut;
+ const fire=campfire();fire.position.copy(home).add(new THREE.Vector3(3,0,2));fire.position.y=terrainH(fire.position.x,fire.position.z);scene.add(fire);TR.fire=fire;
+ TR.pile=new THREE.Group();TR.pile.position.copy(home).add(new THREE.Vector3(-3,0,4));TR.pile.position.y=terrainH(TR.pile.position.x,TR.pile.position.z);scene.add(TR.pile);TR.pileN=-1;
+ addLabel(`🛖 ${S.creature.name}部落`,()=>hut.position.clone().setY(hut.position.y+7.8));
+ // chief
+ const pl=buildCreature(morphed(S.creature));pl.scale.setScalar(PSCALE);const crown=new THREE.Mesh(new THREE.ConeGeometry(.5,.8,5),new THREE.MeshStandardMaterial({color:0xffd34d,metalness:.4,roughness:.3}));const hs=S.creature.spine[0];crown.position.set(hs.x,hs.y+hs.r+.35+pl.userData.body.position.y,0);pl.userData.body.add(crown);pl.position.copy(home).add(new THREE.Vector3(4,0,-1));pl.position.y=terrainH(pl.position.x,pl.position.z);scene.add(pl);TR.pl=pl;TR.vy=0;
+ // members
+ TR.mem=[];for(let i=0;i<S.tr.members;i++)trAddMember(true);
+ TR.pets=[];const wildSp=IDX.filter(i=>!S.tr.rivals.some(r=>r.i===i));
+ for(let k=0;k<S.tr.pets;k++)trAddPet(sps[wildSp[k%wildSp.length]||0],true);
+ // rivals
+ TR.rivals=S.tr.rivals.map((r,ri)=>{const sp=sps[r.i],ns=WD.spots[r.i+1];const h=hutMesh(sp.d.color,false);h.position.copy(ns).add(new THREE.Vector3(0,-.1,0));scene.add(h);const mem=[];const n=r.state==='conquered'?2:r.def;for(let k=0;k<n;k++){const m=trMember(sp.d,sp.scale*.8);m.position.set(ns.x+Math.cos(k*1.6)*5,0,ns.z+Math.sin(k*1.6)*5);m.position.y=terrainH(m.position.x,m.position.z);scene.add(m);mem.push({g:m,tx:m.position.x,tz:m.position.z,tt:rnd(0,4)})}
+  const R={r,sp,hut:h,pos:ns,mem,stats:statsOf(sp.d)};R.label=addLabel('',()=>ns.clone().setY(ns.y+6.6));trRivalLook(R);return R});
+ // wild animals
+ TR.wild=[];wildSp.forEach((i,wi)=>{const sp=sps[i];for(let k=0;k<(wi<3?2:1);k++){let x,z,t=0;do{const a=rnd(0,6.28),d=rnd(15,70);x=Math.cos(a)*d;z=Math.sin(a)*d}while(terrainH(x,z)<1&&t++<50);const g=buildCreature(sp.d);g.scale.setScalar(sp.scale*.9);g.position.set(x,terrainH(x,z),z);scene.add(g);TR.wild.push({g,sp,tx:x,tz:z,tt:0})}});
+ $('editor').classList.add('hide');$('c3d').classList.remove('hide');c2.classList.add('hide');$('bars').classList.remove('hide');$('cellpanel').classList.add('hide');$('social').classList.add('hide');
+ setMusic('tribe');curProgress=trProgress;trActions();
+ camera.position.set(pl.position.x+10,pl.position.y+8,pl.position.z+10);WD.cam.yaw=2.3;WD.cam.dist=16;WD.cam.pitch=.5;
+ if(TEST){WD.cam.yaw=Math.atan2(pl.position.x-hut.position.x,pl.position.z-hut.position.z)+.5}
+}
+function trAddMember(init){const m=trMember(morphed(S.creature),PSCALE*.75);const a=rnd(0,6.28);m.position.set(TR.home.x+Math.cos(a)*4,0,TR.home.z+Math.sin(a)*4);m.position.y=terrainH(m.position.x,m.position.z);scene.add(m);TR.mem.push({g:m,state:'idle',tx:m.position.x,tz:m.position.z,tt:rnd(0,3),carry:0});if(!init)particles(m.position.clone().setY(m.position.y+1),0xffe27a,12,3)}
+function trAddPet(sp,init){const g=buildCreature(sp.d);g.scale.setScalar(sp.scale*.75);g.position.copy(TR.pl?TR.pl.position:TR.home).add(new THREE.Vector3(rnd(-2,2),0,rnd(-2,2)));scene.add(g);TR.pets.push({g,sp})}
+function trRivalLook(R){const c=R.r.state==='conquered'?S.creature.color:R.sp.d.color;R.hut.userData.flag.material.color.set(c)}
+function trProgress(){const s=S.tr.rivals.reduce((a,r)=>a+(r.state!=='neutral'?1:Math.min(.9,r.rel/100)),0);return s/S.tr.rivals.length*100}
+function trActions(){setActions([{t:(S.tr.gather?'🍎 採集中… G':'🍎 去採集 G'),cls:S.tr.gather?'on':'',f:trGather},{t:'👥 招募 R (10🍎)',f:trRecruit},{t:'🐾 馴服 T (5🍎)',f:trTame},{t:'🎁 送禮 1',f:()=>trRivalAct('gift')},{t:'🎵 表演 2',f:()=>trRivalAct('show')},{t:'⚔️ 突襲 3',f:()=>trRivalAct('raid')}])}
+function trGather(){S.tr.gather=!S.tr.gather;toast(S.tr.gather?'族人出發去採果子了！':'族人回家休息');trActions();save()}
+function trRecruit(){if(TR.pl.position.distanceTo(TR.home)>12){toast('回到自己的部落才能招募');return}if(TR.mem.length>=10){toast('部落已經滿了（10 人）');return}if(S.tr.food<10){toast('食物不夠（需要 10🍎）');sfx.bad();return}S.tr.food-=10;S.tr.members++;trAddMember(false);sfx.unlock();toast('👥 新族人加入了！');save()}
+function trTame(){let w=null,bd=5;for(const x of TR.wild){const d=x.g.position.distanceTo(TR.pl.position);if(d<bd){bd=d;w=x}}if(!w){toast('靠近野生動物才能馴服');return}if(S.tr.food<5){toast('需要 5🍎 才能馴服');sfx.bad();return}S.tr.food-=5;S.tr.pets++;TR.wild.splice(TR.wild.indexOf(w),1);TR.pets.push({g:w.g,sp:w.sp});doAct(w.g,'happy');particles(w.g.position.clone().setY(w.g.position.y+1),0xff8fb0,12,3);sfx.heart();toast(`🐾 馴服了${w.sp.d.name}！牠會幫部落找食物`);save()}
+function nearRival(){for(const R of TR.rivals)if(R.pos.distanceTo(TR.pl.position)<11)return R;return null}
+function trRivalAct(kind){initAudio();if(TR.social&&kind==='show')return;const R=nearRival();if(!R){toast('走到別的部落旁邊才能這樣做');return}const r=R.r;if(r.state!=='neutral'){toast(r.state==='ally'?`${R.sp.d.name}部落已經是盟友了`:`${R.sp.d.name}部落已經被你征服了`);return}
+ if(kind==='gift'){if(S.tr.food<10){toast('需要 10🍎 才能送禮');sfx.bad();return}S.tr.food-=10;r.rel=Math.min(100,r.rel+20+TR.st.soc*2);sfx.heart();floatText(R.pos.clone().setY(R.pos.y+5),'🎁 ❤️','#ff8fb0');R.mem.forEach(m=>doAct(m.g,'happy'));trRelCheck(R)}
+ if(kind==='show'){const len=4,acts=['sing','dance','pose'],seq=[];for(let i=0;i<len;i++)seq.push(acts[Math.floor(Math.random()*3)]);TR.social={R,seq,i:0,t:9,max:9,name:R.sp.d.name+'部落'};$('social').classList.remove('hide');renderSocial()}
+ if(kind==='raid'){if(TR.raid){toast('已經在突襲了！');return}if(TR.mem.length<2){toast('至少要 2 個族人才能突襲');return}TR.raid={R,t:0,phase:'go'};toast(`⚔️ 全族出發突襲${R.sp.d.name}部落！`);sfx.drum()}
+ trActions();save()}
+function trShowKey(a){const so=TR.social,pl=TR.pl;doAct(pl,a);sfx[a]();TR.mem.forEach(m=>{if(m.g.position.distanceTo(pl.position)<10)doAct(m.g,a)});floatText(pl.position.clone().setY(pl.position.y+2.4),ACTIC[a]);if(!so)return;if(so.seq[so.i]===a){so.i++;sfx.good();if(so.i>=so.seq.length){trShowEnd(true)}}else trShowEnd(false);renderSocial()}
+function trShowEnd(ok){const R=TR.social.R;TR.social=null;$('social').classList.add('hide');if(ok){const g=25+TR.st.soc*4;R.r.rel=Math.min(100,R.r.rel+g);sfx.heart();floatText(R.pos.clone().setY(R.pos.y+5),`👏 ❤️+${g}`,'#ff8fb0');R.mem.forEach(m=>doAct(m.g,'happy'));trRelCheck(R)}else{R.r.rel=Math.max(0,R.r.rel-8);sfx.bad();floatText(R.pos.clone().setY(R.pos.y+5),'😒','#fff')}save()}
+function trRelCheck(R){if(R.r.rel>=100&&R.r.state==='neutral'){R.r.state='ally';sfx.win();addDNA(30);toast(`🤝 ${R.sp.d.name}部落成為你的盟友！他們會定期送食物來`,4000);trWinCheck()}updateStageBar()}
+function trWinCheck(){updateStageBar();if(S.tr.rivals.every(r=>r.state!=='neutral')&&!S.done.tribe){S.done.tribe=1;save();setTimeout(()=>{sfx.win();const al=S.tr.rivals.filter(r=>r.state==='ally').length,co=S.tr.rivals.length-al;$('endTxt').innerHTML=`${S.creature.name}部落現在有 ${TR.mem.length} 位族人、${S.tr.pets} 隻寵物。<br>🤝 盟友 ${al} 個 · ⚔️ 征服 ${co} 個 · 🧬 DNA ${Math.floor(S.dna)}`;$('endov').classList.remove('hide')},1500)}}
+function trUpdate(dt){const pl=TR.pl,p=pl.position;TR.t+=dt;
+ const dir=inputDir();let mv=0;const spd=4.5+TR.st.spd*.6;if(dir){mv=1;moveOnGround(pl,dir.x*spd*dt,dir.z*spd*dt);faceTo(pl,dir.x,dir.z,dt)}const gh=terrainH(p.x,p.z);TR.vy-=22*dt;p.y+=TR.vy*dt;if(p.y<=gh){p.y=gh;TR.vy=0}animCreature(pl,dt,mv);
+ // fire flicker
+ TR.fire.userData.fl.scale.y=1.1+Math.sin(TR.t*13)*.15+Math.sin(TR.t*7)*.1;TR.fire.userData.L.intensity=7+Math.sin(TR.t*11)*1.5;
+ // food pile visual
+ const pn=Math.min(30,Math.floor(S.tr.food/2));if(pn!==TR.pileN){TR.pileN=pn;TR.pile.clear();const fm=new THREE.MeshStandardMaterial({color:0xff5e5e,roughness:.4}),fm2=new THREE.MeshStandardMaterial({color:0xffb347,roughness:.4});for(let i=0;i<pn;i++){const f=new THREE.Mesh(GEO.sphLo,i%3?fm:fm2);f.scale.setScalar(.3);const lay=Math.floor(i/8);f.position.set(Math.cos(i*2.4)*(1.1-lay*.3),.25+lay*.42,Math.sin(i*2.4)*(1.1-lay*.3));f.castShadow=true;TR.pile.add(f)}}
+ // members
+ const raid=TR.raid;
+ for(const m of TR.mem){const g=m.g;let tx=null,tz=null,s=3.6,mvm=0;
+  if(raid){const rp=raid.R.pos;if(raid.phase==='return'){tx=TR.home.x;tz=TR.home.z}else{const a=TR.mem.indexOf(m)*1.1;tx=rp.x+Math.cos(a)*4;tz=rp.z+Math.sin(a)*4;s=5}}
+  else if(S.tr.gather){if(m.state==='idle'||m.state==='home'&&!m.carry){const ts=WD.trees.filter(t=>t.fruits.some(f=>f.visible));if(ts.length){ts.sort((a,b)=>Math.hypot(a.x-g.position.x,a.z-g.position.z)-Math.hypot(b.x-g.position.x,b.z-g.position.z));m.tree=ts[Math.floor(Math.random()*Math.min(3,ts.length))];m.state='go'}}
+   if(m.state==='go'&&m.tree){tx=m.tree.x;tz=m.tree.z;if(Math.hypot(tx-g.position.x,tz-g.position.z)<2.2){m.state='pick';m.tt=2}}
+   if(m.state==='pick'){m.tt-=dt;g.userData.body.rotation.z=Math.sin(TR.t*10)*.2;if(m.tt<=0){const f=m.tree.fruits.find(f=>f.visible);if(f){f.visible=false;m.tree.regrow=25;m.carry=3}m.state='home'}}
+   if(m.state==='home'){tx=TR.pile.position.x;tz=TR.pile.position.z;if(Math.hypot(tx-g.position.x,tz-g.position.z)<2){if(m.carry){S.tr.food+=m.carry;floatText(g.position.clone().setY(g.position.y+2),'+'+m.carry+'🍎','#ffe066');m.carry=0;sfx.eat()}m.state='idle'}}}
+  else{m.tt-=dt;if(m.tt<=0){m.tt=rnd(2,5);const a=rnd(0,6.28);m.tx=TR.home.x+Math.cos(a)*rnd(3,8);m.tz=TR.home.z+Math.sin(a)*rnd(3,8)}tx=m.tx;tz=m.tz;s=1.6}
+  if(tx!==null){const ex=tx-g.position.x,ez=tz-g.position.z,ed=Math.hypot(ex,ez);if(ed>.5){mvm=Math.min(1,s/3.5);moveOnGround(g,ex/ed*s*dt,ez/ed*s*dt,.2);faceTo(g,ex,ez,dt,6)}}
+  g.position.y=terrainH(g.position.x,g.position.z);animCreature(g,dt,mvm)}
+ // raid logic
+ if(raid){raid.t+=dt;const R=raid.R;if(raid.phase==='go'){const arrived=TR.mem.filter(m=>m.g.position.distanceTo(R.pos)<7).length;if(arrived>=TR.mem.length*.7||raid.t>25){raid.phase='fight';raid.t=0}}
+  else if(raid.phase==='fight'){if(Math.random()<dt*6){const a=TR.mem[Math.floor(Math.random()*TR.mem.length)];if(a){doAct(a.g,'bite');sfx.bite()}const b=R.mem[Math.floor(Math.random()*R.mem.length)];if(b){doAct(b.g,'hurt');flash(b.g);particles(b.g.position.clone().setY(b.g.position.y+1),0xffffff,4,3)}}
+   if(raid.t>5){const my=(TR.mem.length*(1+TR.st.atk*.25)+S.tr.pets*.6)*rnd(.8,1.2),th=(R.r.def*(1+R.stats.atk*.25))*rnd(.8,1.2);
+    if(my>=th){R.r.state='conquered';const loot=Math.min(R.r.food,25);S.tr.food+=loot;addDNA(30);sfx.win();toast(`🏆 突襲成功！征服了${R.sp.d.name}部落，搶到 ${loot}🍎`,4000);trRivalLook(R);while(R.mem.length>2){const x=R.mem.pop();scene.remove(x.g)}R.mem.forEach(x=>doAct(x.g,'hurt'))}
+    else{const lose=Math.max(1,Math.ceil(TR.mem.length/3));for(let i=0;i<lose&&TR.mem.length>1;i++){const x=TR.mem.pop();particles(x.g.position.clone().setY(x.g.position.y+1),0xff6b7d,10,4);scene.remove(x.g);S.tr.members--}R.r.rel=Math.max(0,R.r.rel-20);sfx.hurt();toast(`💥 突襲失敗……失去了 ${lose} 位族人。多招募一點族人再試！`,4000)}
+    raid.phase='return';raid.t=0;trWinCheck();save()}}
+  else if(raid.phase==='return'&&raid.t>6)TR.raid=null}
+ // rivals
+ for(const R of TR.rivals){for(const m of R.mem){m.tt-=dt;if(m.tt<=0){m.tt=rnd(2,5);const a=rnd(0,6.28);m.tx=R.pos.x+Math.cos(a)*rnd(3,7);m.tz=R.pos.z+Math.sin(a)*rnd(3,7)}let mvm=0;if(!(raid&&raid.R===R&&raid.phase==='fight')){const ex=m.tx-m.g.position.x,ez=m.tz-m.g.position.z,ed=Math.hypot(ex,ez);if(ed>.5){mvm=.4;moveOnGround(m.g,ex/ed*1.5*dt,ez/ed*1.5*dt,.2);faceTo(m.g,ex,ez,dt,5)}}else faceTo(m.g,TR.home.x-m.g.position.x,TR.home.z-m.g.position.z,dt);m.g.position.y=terrainH(m.g.position.x,m.g.position.z);animCreature(m.g,dt,mvm)}
+  R.hut.userData.flag.rotation.y=Math.sin(TR.t*2)*.3;const r=R.r;R.label.set(r.state==='ally'?`🤝 ${R.sp.d.name}部落（盟友）`:r.state==='conquered'?`🏳️ ${R.sp.d.name}部落（已征服）`:`🛖 ${R.sp.d.name}部落 ❤️${Math.floor(r.rel)}/100 · 戰士 ${r.def}`)}
+ // pets follow
+ TR.pets.forEach((pt,i)=>{const g=pt.g,a=i*2+TR.t*.2,tx=p.x+Math.cos(a)*3,tz=p.z+Math.sin(a)*3,ex=tx-g.position.x,ez=tz-g.position.z,ed=Math.hypot(ex,ez);let mvm=0;if(ed>1.5){const s=Math.min(7,ed*1.5);moveOnGround(g,ex/ed*s*dt,ez/ed*s*dt,.2);faceTo(g,ex,ez,dt,6);mvm=1}g.position.y=terrainH(g.position.x,g.position.z);animCreature(g,dt,mvm)});
+ for(const w of TR.wild){w.tt-=dt;if(w.tt<=0){w.tt=rnd(3,6);w.tx=w.g.position.x+rnd(-8,8);w.tz=w.g.position.z+rnd(-8,8)}const ex=w.tx-w.g.position.x,ez=w.tz-w.g.position.z,ed=Math.hypot(ex,ez);let mvm=0;if(ed>.6){moveOnGround(w.g,ex/ed*1.8*dt,ez/ed*1.8*dt);faceTo(w.g,ex,ez,dt,5);mvm=.5}else w.tt=Math.min(w.tt,1);w.g.position.y=terrainH(w.g.position.x,w.g.position.z);animCreature(w.g,dt,mvm)}
+ // timers
+ for(const t of WD.trees)if(t.regrow>0){t.regrow-=dt;if(t.regrow<=0)t.fruits.forEach(f=>f.visible=true)}
+ if(TR.social){TR.social.t-=dt;renderSocial();if(TR.social.t<=0)trShowEnd(false)}
+ S.tr.allyGift-=dt;if(S.tr.allyGift<=0){S.tr.allyGift=30;const al=S.tr.rivals.filter(r=>r.state!=='neutral').length;if(al){S.tr.food+=al*5;toast(`🎁 盟友和被征服的部落送來 ${al*5}🍎`)}}
+ if(S.tr.pets){TR.petT=(TR.petT||0)+dt;if(TR.petT>15){TR.petT=0;S.tr.food+=S.tr.pets;floatText(p.clone().setY(p.y+2),`🐾 +${S.tr.pets}🍎`,'#ffe066')}}
+ S.tr.theft-=dt;if(S.tr.theft<=0){S.tr.theft=75;const bad=TR.rivals.find(R=>R.r.state==='neutral'&&R.r.rel<20);if(bad&&S.tr.food>0){const n=Math.min(5,S.tr.food);S.tr.food-=n;toast(`😠 ${bad.sp.d.name}部落偷走了 ${n}🍎！跟他們交朋友或突襲他們吧`,3500);sfx.bad()}}
+ let pr='';const R=nearRival();if(R&&R.r.state==='neutral')pr=`${R.sp.d.name}部落：1 送禮 · 2 表演 · 3 突襲`;else if(TR.wild.some(w=>w.g.position.distanceTo(p)<5))pr='按 T 用 5🍎 馴服這隻野生動物';else if(p.distanceTo(TR.home)<12)pr='這是你的部落 · R 招募族人 · G 派族人採集';if(TR.t<10&&!pr)pr='你成為了酋長！帶領部落壯大吧';$('prompt').textContent=pr;
+ setBars(`<div id="statbox">👑 ${S.creature.name}部落<br>🍎 食物 <b>${S.tr.food}</b> · 👥 族人 <b>${TR.mem.length}</b>/10 · 🐾 寵物 <b>${S.tr.pets}</b><br>${S.tr.rivals.map(r=>{const R=TR.rivals.find(x=>x.r===r);return`${R.sp.d.name}部落：${r.state==='ally'?'🤝盟友':r.state==='conquered'?'🏳️已征服':'❤️'+Math.floor(r.rel)}`}).join('<br>')}</div>`);
+ if(Math.floor(TR.t)%10===0&&Math.floor(TR.t-dt)%10!==0){save();updateStageBar()}
+ updPlants(dt,TR.t);updParticles(dt);camFollow(p,dt,1.2)}
+// ---------- MAIN ----------
+const KEYS={};let STAGE='menu';
+function hideAllStageUI(){['editor','cellpanel','social'].forEach(i=>$(i).classList.add('hide'));$('prompt').textContent='';setActions([]);setBars('');CR.social=null;TR.social=null;TR.raid=null}
+function enterStage(st){hideAllStageUI();clearLabels();S.stage=st;STAGE=st;$('hud').classList.remove('hide');$('menuBtn').classList.remove('hide');
+ if(st==='cell'){if(!S.diet){$('diet').classList.remove('hide');STAGE='diet';return}cellInit()}
+ else if(st==='editor')edInit();else if(st==='creature')crInit();else if(st==='tribe')trInit();
+ setDNA();updateStageBar();save()}
+function goStage(st){fade(STNAME[st]||'',{editor:'設計一隻屬於你的生物',creature:'走上陸地，認識島上的鄰居',tribe:'變得聰明，建立你的部落',cell:'在潮池裡吃東西長大'}[st],()=>enterStage(st))}
+function showMenu(){STAGE='menu';$('menu').classList.remove('hide');$('btnCont').classList.toggle('hide',!loadSave());$('hud').classList.add('hide');$('menuBtn').classList.add('hide');hideAllStageUI();setMusic('menu')}
+$('btnNew').onclick=()=>{initAudio();sfx.click();if(loadSave()&&!confirm('要從頭開始嗎？舊的進度會被覆蓋。'))return;S=newSave();$('menu').classList.add('hide');goStage('cell')};
+$('btnCont').onclick=()=>{initAudio();sfx.click();S=loadSave();$('menu').classList.add('hide');goStage(S.stage)};
+$('btnHelp').onclick=()=>{initAudio();sfx.click();$('help').classList.remove('hide')};$('btnHelpBack').onclick=()=>{sfx.click();$('help').classList.add('hide')};
+$('menuBtn').onclick=()=>{save();sfx.click();showMenu()};
+$('muteBtn').onclick=()=>{initAudio();AU.muted=!AU.muted;$('muteBtn').textContent=AU.muted?'🔇':'🔊';if(AU.master)AU.master.gain.value=AU.muted?0:.8};
+document.querySelectorAll('.dopt').forEach(b=>b.onclick=()=>{initAudio();sfx.unlock();S.diet=b.dataset.d;if(S.diet==='carn'){S.cellUnl.jaw=1;S.cellOn.jaw=1}else{S.cellUnl.filter=1;S.cellOn.filter=1}$('diet').classList.add('hide');STAGE='cell';cellInit();save()});
+$('btnEndStay').onclick=()=>{$('endov').classList.add('hide')};$('btnEndNew').onclick=()=>{localStorage.removeItem(SAVE_KEY);location.reload()};
+edSetup();
+// input
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;KEYS[e.code]=true;initAudio();
+ if(STAGE==='creature'){if(e.code==='Digit1')crSocialKey('sing');if(e.code==='Digit2')crSocialKey('dance');if(e.code==='Digit3')crSocialKey('pose');if(e.code==='KeyF')crAttack();if(e.code==='KeyE')crUse();if(e.code==='KeyQ')crCharge();if(e.code==='KeyZ')crSpit();if(e.code==='KeyX')crFlash();if(e.code==='Space'&&CR.onGround){CR.vy=8.5+trLv('creature','bounce')*16+trLv('creature','wing')*6;CR.onGround=false;sfx.jump()}}
+ if(STAGE==='tribe'){if(TR.social){if(e.code==='Digit1')trShowKey('sing');if(e.code==='Digit2')trShowKey('dance');if(e.code==='Digit3')trShowKey('pose')}else{if(e.code==='Digit1')trRivalAct('gift');if(e.code==='Digit2')trRivalAct('show');if(e.code==='Digit3')trRivalAct('raid')}if(e.code==='KeyG')trGather();if(e.code==='KeyR')trRecruit();if(e.code==='KeyT')trTame();if(e.code==='Space'&&TR.vy===0){TR.vy=8;sfx.jump()}}
+ if(STAGE==='cell'&&e.code==='KeyQ')cellShock();if(STAGE==='cell'&&e.code==='KeyE'){$('cellpanel').classList.toggle('hide');renderCellPanel()}
+ if(e.code==='Space')e.preventDefault()});
+addEventListener('keyup',e=>{KEYS[e.code]=false});
+addEventListener('blur',()=>{for(const k in KEYS)KEYS[k]=false});
+const c3=$('c3d');let drag=null;
+addEventListener('pointermove',e=>{if(STAGE==='cell'){CL.mx=e.clientX;CL.my=e.clientY;CL.mInside=true}});
+c2.addEventListener('pointerdown',e=>{initAudio();CL.mx=e.clientX;CL.my=e.clientY;CL.mInside=true});
+c3.addEventListener('pointerdown',e=>{initAudio();if(STAGE==='creature'||STAGE==='tribe'){drag={x:e.clientX,y:e.clientY,moved:0};c3.setPointerCapture(e.pointerId)}});
+c3.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);drag.x=e.clientX;drag.y=e.clientY;WD.cam.yaw-=dx*.006;WD.cam.pitch=clamp(WD.cam.pitch+dy*.004,.08,1.25)});
+c3.addEventListener('pointerup',e=>{if(drag&&drag.moved<6&&STAGE==='creature')crAttack();drag=null});
+c3.addEventListener('wheel',e=>{if(WD.cam){WD.cam.dist=clamp(WD.cam.dist+e.deltaY*.01,5,28)}},{passive:true});
+addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();if(STAGE==='editor')edApplyView()});
+// loop
+let last=performance.now();
+function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;try{
+ musicTick();
+ if(STAGE==='cell'){cellUpdate(dt);cellDraw()}
+ else if(STAGE==='menu'||STAGE==='diet'){menuDraw(dt)}
+ else if(scene){if(STAGE==='editor'){edUpdate(dt);edDraw.t=(edDraw.t||0)+dt}else if(STAGE==='creature')crUpdate(dt);else if(STAGE==='tribe')trUpdate(dt);renderer.render(scene,camera);updateLabels(camera,dt)}
+}catch(err){console.error(err);if(!loop.err){loop.err=1;toast('⚠️ 出錯了：'+err.message,6000)}}}
+// menu background: drifting cells
+const MB={t:0,cells:Array.from({length:18},()=>({x:Math.random(),y:Math.random(),r:rnd(10,40),h:rnd(0,360),a:rnd(0,6),s:rnd(.01,.03)}))};
+function menuDraw(dt){c2.classList.remove('hide');const W=Math.round(innerWidth*devicePixelRatio),H=Math.round(innerHeight*devicePixelRatio);if(c2.width!==W||c2.height!==H){c2.width=W;c2.height=H}ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);MB.t+=dt;const w=innerWidth,h=innerHeight;ctx.fillStyle='#0b4a5c';ctx.fillRect(0,0,w,h);
+ for(const c of MB.cells){c.x+=Math.cos(c.a)*c.s*dt;c.y+=Math.sin(c.a)*c.s*dt;c.a+=Math.sin(MB.t+c.h)*dt*.3;if(c.x<-.1)c.x=1.1;if(c.x>1.1)c.x=-.1;if(c.y<-.1)c.y=1.1;if(c.y>1.1)c.y=-.1;drawBlob(c.x*w,c.y*h,c.r,c.a,MB.t,{ph:c.h,fill:`hsl(${c.h},65%,62%)`,inner:`hsl(${c.h},70%,85%)`,edge:`hsl(${c.h},60%,35%)`,flag:true,alpha:.55})}}
+// boot
+(function boot(){
+ if(TEST){S=newSave();S.dna=120;S.growth=TEST==='cell'?35:100;if(TEST!=='cell'){S.done.cell=1;S.diet='herb'}if(TEST==='creature'||TEST==='tribe'){S.done.editor=1;S.creature=defaultCreature('herb');S.creature.parts.push({t:'antenna',s:0,a:1.3},{t:'spike',s:2,a:1.6},{t:'spike',s:3,a:1.5},{t:'arm',s:1,a:-.3})}if(TEST==='tribe')S.done.creature=1;
+  if(Q.get('dna')){S.dnaC={self:30,spiky:22,shock:24,photo:16,shell:12,swift:6};S.tierC={spike:2,shock:2,regen:1,shell:1};S.dnaK={self:28,horn:30,turtle:16,shroom:14,kelp:18,berry:6,c_shock:5};S.tierK={horn:2,shell:2,glow:1,leaf:2};S.unlocked.horn=1;S.unlocked.shell=1;S.unlocked.leaf=1;if(S.creature)S.creature.parts=S.creature.parts.filter(p=>p.t!=='spike'&&p.t!=='arm')}
+  if(TEST==='menu'){showMenu()}else{$('menu').classList.add('hide');if(TEST==='cell'){S.diet='herb';S.cellUnl={filter:1,spike:1,flag:1};S.cellOn={filter:1,flag:1}}enterStage(TEST)}
+  window.__ready=true}
+ else{S=loadSave()||newSave();showMenu()}
+ requestAnimationFrame(loop)})();
+window.__dbg={get S(){return S},CR,TR,CL,ED,crSocialKey,goStage,crAttack,crUse,trGather,trRivalAct,trRecruit,crKill};
+</script></body></html>
